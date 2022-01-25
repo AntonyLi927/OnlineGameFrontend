@@ -1,7 +1,6 @@
 <template>
   <div class="pictionary-container clearfix">
     
-
     <!-- 输入room code的地方 -->
     <div class="shadow" :class="isShadow">
       <div class="enter-room-id-wrapper" :class="isEnterRoomId">
@@ -27,7 +26,7 @@
       </div>
       <div class="pictionary-menu-content">
           <div class="pictionary-image-wrapper">
-
+            <img src="../assets/pictionary.png" width="200px" height="200px">
           </div>
           <div class="pictionary-menu-list">
             <div class="create-room">
@@ -56,7 +55,7 @@
             <td>
               <div class="player">
                 <div class="player-rank">
-                    #4
+                    #1
                 </div>
                 <div class="player-avatar">
                   <div class="avatar-wrapper">
@@ -75,7 +74,7 @@
             <td>
               <div class="player">
                 <div class="player-rank">
-                    #4
+                    #2
                 </div>
                 <div class="player-avatar">
                   <div class="avatar-wrapper">
@@ -280,7 +279,11 @@
             isShowMainArea: '',
             isShowWord: '',
             playerList: [],
+            roundStart: false, // whether current round starts 
           };
+      },
+      watch: {
+        
       },
       methods: {
         enterRoomId() {
@@ -466,8 +469,18 @@
             this.drawTimeSec = this.drawTimeSec - 1;
             this.countDown();
           }, 1000)
-        }
+        },
+        gameProccess() {
+          // todo
+          for (let i = 0; i < this.playerList.length; i++) {
+              // it's playList[i]'s turn 
+              // if playerList[i] == user: choose a word 
+              // this word should be sent to other players in the same room
+              // else wait 
+          }
+        },
       },
+  
     };
 
     // function erase() {
@@ -655,7 +668,7 @@
   display: none;
   width: 600px;
   height: 350px;
-  background-color: blanchedalmond;
+  background-color: whitesmoke;
   margin: 150px auto;
   border-radius: 10px;
 }
@@ -674,19 +687,22 @@
 }
 
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-image-wrapper {
-  /* background-color: brown; */
-  width: 300px;
+  /* background-color: rgb(255, 0, 0); */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 250px;
   height: 250px;
 }
 
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list {
   margin-top: 35px;
-  width: 400px;
+  width: 350px;
   height: 180px;
 }
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list div {
   height: 60px;
-  width: 400px;
+  width: 350px;
   
 }
 
@@ -697,7 +713,7 @@
   border-radius: 5px;
   height: 40px;
   width: 250px;
-  margin: 10px 75px;
+  margin: 10px 50px;
   background-color:coral;
 }
 
@@ -711,7 +727,7 @@
   border-radius: 5px;
   height: 40px;
   width: 250px;
-  margin: 10px 75px;
+  margin: 10px 50px;
   background-color:coral;
 }
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .pictionary-game-rules button{
@@ -721,7 +737,7 @@
   border-radius: 5px;
   height: 40px;
   width: 250px;
-  margin: 10px 75px;
+  margin: 10px 50px;
   background-color:coral;
 
 }

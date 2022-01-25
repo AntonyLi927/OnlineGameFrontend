@@ -7,9 +7,6 @@
             <span>OnlineGames</span>
           </li>
           <li>
-            <span><router-link to="/pictionary">Pictionary</router-link></span>
-          </li>
-          <li>
             <span>Games</span>
           </li>
           <li>
@@ -130,7 +127,12 @@
       })
       .catch(err => {
         console.error(err); 
-      })
+      });
+
+      this.$router.push({
+        path: '/mainpage',
+      });
+
     },
     data() {
       return {
@@ -229,6 +231,7 @@ li {
   top: 0;
   box-shadow: 0 2px 4px 0 rgb(0 0 0 / 15%);
   float: left;
+  z-index: 9999;
 }
 
 .top-nav-left {
@@ -302,7 +305,7 @@ li {
   transition-duration: 0.5s;
   transform: translateX(750px);
   transition-timing-function: ease-in-out;
-  z-index: 999;
+  z-index: 99999;
   position: fixed;
   top: 0rem;
   box-shadow: 0 2px 4px 0 rgb(0 0 0 / 15%);
@@ -429,11 +432,11 @@ li {
 
 .content {
   width: 100%;
-  height: 730px;
+  height: 729px;
   /* background-color: brown; */
   margin-top: 64px;
-  background-color: rebeccapurple;
-  background-image: url("https://www.drawize.com/Content/images/grunge-img.png");
+  background-color: transparent;
+  /* background-image: url("https://papergames.io/images/patterns/style-2-5.png"); */
 }
 
 </style>
