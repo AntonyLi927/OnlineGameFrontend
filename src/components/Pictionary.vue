@@ -247,6 +247,7 @@
 <script>
 //     import {mapState} from 'vuex'
     import 'animate.css';
+    // import axios from 'axios';
     export default {
       name: "Pictionary",
       mounted() {
@@ -278,6 +279,7 @@
             isMenuShow: 'active',
             isShowMainArea: '',
             isShowWord: '',
+            playerList: [],
           };
       },
       methods: {
@@ -294,9 +296,12 @@
         },
 
         showGame() {
+          
+          
           this.isMenuShow = '';
           this.isShowWord = 'active';
           this.isShowMainArea = 'flex-active';
+
         },
 
         leaveGame() {
