@@ -11,10 +11,10 @@
           <h1>ROOM CODE</h1>
         </div>
         <div class="room-code-input-box">
-          <input type="text">
+          <input type="text" v-model="enteredRoomCode">
         </div>
         <div class="join-room-wrapper">
-          <button class="join-room-btn">JOIN</button>
+          <button class="join-room-btn" @click="joinRoomWithCode">JOIN</button>
         </div>
       </div>
     </div>
@@ -26,11 +26,11 @@
       </div>
       <div class="pictionary-menu-content">
           <div class="pictionary-image-wrapper">
-            <img src="../assets/pictionary.png" width="200px" height="200px">
+            <img src="../assets/4296619.png" width="200px" height="200px">
           </div>
           <div class="pictionary-menu-list">
             <div class="create-room">
-              <button class="create-room-btn" @click="showGame">Create New Room</button>
+              <button class="create-room-btn" @click="showGame">New Room !</button>
             </div>
             <div class="enter-room-code">
               <button class="enter-room-code-btn"  @click="enterRoomId">Enter Room Code</button>
@@ -51,7 +51,7 @@
     <div class="main-area" :class="isShowMainArea">
       <div class="rank-wrapper">
         <table class="rank-table">
-          <tr>
+          <tr v-for="(u, index) in playerList" :key="index">
             <td>
               <div class="player">
                 <div class="player-rank">
@@ -63,37 +63,21 @@
                   </div>   
                 </div>
                 <!-- <div class="player-info"> -->
-                <div class="player-name"></div>
+                <div class="player-name">{{u.username}}</div>
                   
                 <!-- </div> -->
                 <div class="player-points">2000</div>
               </div>
             </td>
           </tr>
-          <tr>
-            <td>
-              <div class="player">
-                <div class="player-rank">
-                    #2
-                </div>
-                <div class="player-avatar">
-                  <div class="avatar-wrapper">
-                    <img>
-                  </div>   
-                </div>
-                <!-- <div class="player-info"> -->
-                <div class="player-name">Antony</div>
-                  
-                <!-- </div> -->
-                <div class="player-points">2000</div>
-              </div>
-            </td>
-          </tr>
+         
         </table>
       </div>     
       <div class="game-screen">
         <div class="game-info">
-          <div>asd</div>
+          <div>
+            <button @click="gameProccess">test</button>
+          </div>
 
           <div class="toolkit">
             <div class="color-chosen-wrapper">
@@ -205,12 +189,21 @@
           </div>
         </div>
         <div class="canvas-wrapper">
-          <canvas ref="canv" id="canv" height="548px" width="852px" 
-          @mousedown="findxy('down', $event)" 
-          @mousemove="findxy('move', $event)"
-          @mouseup="findxy('up', $event)"
-          @mouseout="findxy('out', $event)"></canvas>
-          <!-- <div class="mute"></div> -->
+          
+          <div class="canvas-container">
+            <canvas ref="canv" id="canv" height="546px" width="861.3px" 
+            @mousedown="findxy('down', $event)" 
+            @mousemove="findxy('move', $event)"
+            @mouseup="findxy('up', $event)"
+            @mouseout="findxy('out', $event)"
+            ></canvas>
+          </div>
+          <div class="mute clearfix" :class="isMuteActive">
+            <div class="process-info">
+              <p>Game will start in {{gameStartDelay}}s</p>
+            </div>
+          </div>
+          
         </div>
         <div class="game-footer">
           <div class="leave-wrapper">
@@ -244,7 +237,7 @@
 
 
 <script>
-//     import {mapState} from 'vuex'
+    import {mapState} from 'vuex'
     import 'animate.css';
     // import axios from 'axios';
     export default {
@@ -254,9 +247,9 @@
         this.connectWebSocket();
       },
       computed: {
-        // ...mapState('common', {
-        //   user: 'user',
-        // }),
+        ...mapState('common', {
+          user: 'user',
+        }),
       },
       data() {
           return {
@@ -278,14 +271,42 @@
             isMenuShow: 'active',
             isShowMainArea: '',
             isShowWord: '',
-            playerList: [],
+            playerList: [], // a list of players that current player is in
             roundStart: false, // whether current round starts 
+            roomCode: '', // room code of current room
+            enteredRoomCode: '',
+            isMuteActive: '',
+            gameStartDelay: 10,
           };
       },
       watch: {
         
       },
       methods: {
+        joinRoomWithCode() {
+          // todo 关于输入的code合法性判断
+
+          let data = {
+            status: '',
+            msg: '', 
+            msgType: 'joinWithRoomCode',
+            data: {
+              user: this.user,
+              roomCode: this.enteredRoomCode,
+            },
+          }
+
+          console.log(data)
+
+          this.websocket.send(JSON.stringify(data))
+          this.roomCode = this.enteredRoomCode;
+
+          this.isEnterRoomId = ['non-active'];
+          this.isShadow = '';
+          this.isMenuShow = '';
+          this.isShowWord = 'active';
+          this.isShowMainArea = 'flex-active';
+        },
         enterRoomId() {
           this.isShadow = ['fadeIn', 'active'];
           this.isEnterRoomId = ['slideInUp'];
@@ -299,12 +320,19 @@
         },
 
         showGame() {
-          
-          
+          let data = {
+            status: '',
+            msg: '', 
+            msgType: 'createNewRoom',
+            data: {
+              user: this.user,
+            },
+          }
+
+          this.websocket.send(JSON.stringify(data));
           this.isMenuShow = '';
           this.isShowWord = 'active';
           this.isShowMainArea = 'flex-active';
-
         },
 
         leaveGame() {
@@ -313,7 +341,6 @@
           this.isShowWord = '';
         },
 
-        
         /*initialize canvas */
         initCanvas() {
           this.canvas = this.$refs.canv;
@@ -338,16 +365,22 @@
                 this.ctx.fillStyle = this.strokeColor;
                 this.ctx.fillRect(this.currX, this.currY, 2, 2);
                 this.ctx.closePath();
-                let msg = {
-                  action: 'down',
-                  prevX: this.prevX,
-                  prevY: this.prevY,
-                  currX: this.currX,
-                  currY: this.currY,
-                  strokeColor: this.strokeColor,
+                let data = {
+                  status: '',
+                  msg: '',
+                  msgType: 'syncStroke',
+                  data: {
+                    roomCode: this.roomCode,
+                    action: 'down',
+                    prevX: this.prevX,
+                    prevY: this.prevY,
+                    currX: this.currX,
+                    currY: this.currY,
+                    strokeColor: this.strokeColor,
+                  },
                 }
-                msg = JSON.stringify(msg)
-                this.websocket.send(msg)
+                data = JSON.stringify(data)
+                this.websocket.send(data)
                 this.dot_flag = false;
             }
           }
@@ -373,16 +406,22 @@
             this.ctx.lineWidth = this.strokeWidth;
             this.ctx.stroke();
             this.ctx.closePath();
-            let msg = {
+            let data = {
+              status: '',
+              msg: '',
+              msgType: 'syncStroke',
+              data: {
+                roomCode: this.roomCode,
                 action: 'move',
                 prevX: this.prevX,
                 prevY: this.prevY,
                 currX: this.currX,
                 currY: this.currY,
                 strokeColor: this.strokeColor,
+              },
             }
-            msg = JSON.stringify(msg)
-            this.websocket.send(msg)
+            data = JSON.stringify(data)
+            this.websocket.send(data)
         },
 
         changeColor(clr) {
@@ -394,7 +433,7 @@
         connectWebSocket(){
           //判断当前浏览器是否支持WebSocket
             if ("WebSocket" in window) {
-                this.websocket = new WebSocket("ws://localhost:8081/websocketDemo");
+                this.websocket = new WebSocket("ws://localhost:8081/pictionaryServer");
             } else {
                 alert("Not support websocket");
             }
@@ -410,7 +449,20 @@
             };
             //接收到消息的回调方法
             this.websocket.onmessage = (event) => {
+              let receivedData = JSON.parse(event.data)
+
+              if (receivedData.msgType == 'roomCode') {
+                this.roomCode = receivedData.data;
+                console.log(this.roomCode)
+              }
+
+              if (receivedData.msgType == 'playerList') {
                 
+                this.playerList = receivedData.data;
+                console.log(this.playerList)
+              }
+
+              if (receivedData.msgType == 'chatMsg') {
                 let chatRow = document.createElement("div");
                 chatRow.classList = ["chat-row"];
 
@@ -420,30 +472,31 @@
 
                 let chatRowMsg = document.createElement("div");
                 chatRowMsg.classList = ["chat-row-msg"]
-                chatRowMsg.innerText = event.data;
+                chatRowMsg.innerText = receivedData.data.chatMessage;
                 chatRow.appendChild(chatRowUser);
                 chatRow.appendChild(chatRowMsg);
-                console.log(this.$refs.chatBox)
+                //console.log(this.$refs.chatBox)
                 this.$refs.chatBox.appendChild(chatRow);
                 this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
-
-                console.log(event.data);
-                let msg = JSON.parse(event.data)
-                if(msg.action == 'down') {
-                  this.ctx.beginPath();
-                  this.ctx.fillStyle = msg.strokeColor;
-                  this.ctx.fillRect(msg.currX, msg.currY, 2, 2);
-                  this.ctx.closePath();
-                } else if (msg.action == 'move') {
-                  this.ctx.beginPath();
-                  this.ctx.moveTo(msg.prevX, msg.prevY);
-                  this.ctx.lineTo(msg.currX, msg.currY);
-                  this.ctx.strokeStyle = msg.strokeColor;
-                  this.ctx.lineWidth = 2;
-                  this.ctx.stroke();
-                  this.ctx.closePath();
-                } 
-              };
+              }
+              //console.log(event.data);
+              if (receivedData.msgType == 'syncStroke') {
+                if(receivedData.data.action == 'down') {
+                this.ctx.beginPath();
+                this.ctx.fillStyle = receivedData.data.strokeColor;
+                this.ctx.fillRect(receivedData.data.currX, receivedData.data.currY, 2, 2);
+                this.ctx.closePath();
+              } else if (receivedData.data.action == 'move') {
+                this.ctx.beginPath();
+                this.ctx.moveTo(receivedData.data.prevX, receivedData.data.prevY);
+                this.ctx.lineTo(receivedData.data.currX, receivedData.data.currY);
+                this.ctx.strokeStyle = receivedData.data.strokeColor;
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+                this.ctx.closePath();
+              } 
+            }
+          };
             //连接关闭的回调方法
             this.websocket.onclose = function () {
               console.log("close success!");
@@ -455,22 +508,59 @@
         },
         
         sendMsg() {
-          this.websocket.send(this.message);
+          let data = {
+            status: '',
+            msg: '',
+            msgType: 'chatMsg',
+            data: {
+              chatMessage: this.message,
+              roomCode: this.roomCode,
+            },
+          }
+          this.websocket.send(JSON.stringify(data));
           this.message = '';
         },
-        countDown() {
-          if(this.drawTimeSec <= 0){
+        countDown(secs) {
+          console.log(secs)
+          if(secs <= 0){
             /**
              * 在这里处理一轮结束之后的逻辑
              */
             return;
           } 
           setTimeout(() => {
-            this.drawTimeSec = this.drawTimeSec - 1;
-            this.countDown();
+            secs = secs - 1;
+            this.countDown(secs);
           }, 1000)
         },
+
+
+        gameStartTimer() {
+          console.log("start delay")
+          if (this.gameStartDelay <= 0) {
+            this.isMuteActive = "";
+            this.gameStartDelay = 10;
+            return
+          }
+          setTimeout(() => {
+            this.gameStartDelay = this.gameStartDelay - 1;
+            this.gameStartTimer();
+          }, 1000)
+        },
+        
+
         gameProccess() {
+          //
+          console.log("ssss")
+          this.isMuteActive = "flex-active";
+          this.gameStartTimer();
+
+          // this.isMuteActive = "";
+          // this.gameStartDelay = 10;
+
+          console.log("mute")
+          
+          //
           // todo
           for (let i = 0; i < this.playerList.length; i++) {
               // it's playList[i]'s turn 
@@ -478,7 +568,23 @@
               // this word should be sent to other players in the same room
               // else wait 
           }
+          
+
+
+
         },
+
+        // sleep(numberMillis) { 
+        //   var now = new Date(); 
+        //   var exitTime = now.getTime() + numberMillis; 
+        //   while (now.getTime() < exitTime) { 
+        //     now = new Date();
+        //   } 
+        // },
+
+
+
+
       },
   
     };
@@ -527,7 +633,7 @@
 .pictionary-container {
   width: 100%;
   height: 100%;
-  background-color: rgb(102, 83, 116);
+  background-color: rgb(10, 94, 251);
   background-image: url("https://papergames.io/images/patterns/style-2-5.png");
 }
 
@@ -668,7 +774,7 @@
   display: none;
   width: 600px;
   height: 350px;
-  background-color: whitesmoke;
+  background-color: white;
   margin: 150px auto;
   border-radius: 10px;
 }
@@ -678,7 +784,8 @@
   line-height: 100px;
   height: 98px;
   width: 590px;
-  border-bottom: 2px solid rgb(59, 59, 59);
+  border-bottom: 2px solid rgb(196, 197, 198);
+  color: rgb(253, 92, 32);
   /* background-color: blueviolet; */
 }
 
@@ -707,46 +814,48 @@
 }
 
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .create-room button{
+  font-weight: bold;
   font-size: 20px;
-  border: none;
+  border: 4px solid black;
   outline: none;
-  border-radius: 5px;
+  border-radius: 20px;
   height: 40px;
   width: 250px;
-  margin: 10px 50px;
-  background-color:coral;
+  margin: 2px 42px;
+  background-color:rgb(255, 191, 0);
 }
 
 
 
 
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .enter-room-code button{
+  font-weight: bold;
   font-size: 20px;
-  border: none;
+  border: 4px solid black;
   outline: none;
-  border-radius: 5px;
+  border-radius: 20px;
   height: 40px;
   width: 250px;
-  margin: 10px 50px;
-  background-color:coral;
+  margin: 2px 42px;
+  background-color:rgb(255, 191, 0);
 }
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .pictionary-game-rules button{
+  font-weight: bold;
   font-size: 20px;
-  border: none;
+  border: 4px solid black;
   outline: none;
-  border-radius: 5px;
+  border-radius: 20px;
   height: 40px;
   width: 250px;
-  margin: 10px 50px;
-  background-color:coral;
-
+  margin: 2px 42px;
+  background-color:rgb(255, 191, 0);
 }
 
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .create-room button:hover, 
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .enter-room-code button:hover, 
 .pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .pictionary-game-rules button:hover {
   cursor: pointer;
-  background-color: rgb(255, 104, 50);
+  background-color: rgb(255, 203, 0);
 }
 
 
@@ -1078,13 +1187,31 @@
   width: 100%;
 }
 
-/* .pictionary-container .main-area .game-screen .canvas-wrapper .mute {
-  height: 630px;
-  width: 1087;
-  background-color: transparent;
-  float: left;
-  transform: translateY(-634px);
-} */
+#canv {
+  background-color: rgb(255, 247, 235);
+}
+
+.pictionary-container .main-area .game-screen .canvas-wrapper .mute {
+  height: 546px;
+  width: 861.3px;
+  background-color: rgba(29, 29, 29, 0.2);
+  position: relative;
+  top: -550px;
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.pictionary-container .main-area .game-screen .canvas-wrapper .mute .process-info {
+  line-height: 150px;
+  width: 600px;
+  height: 150px;
+  /* background-color: tomato; */
+  text-align: center;
+  font-size: 30px;
+}
+
+
 
 .pictionary-container .main-area .game-screen .game-footer {
   background-color: rgb(52, 81, 98);

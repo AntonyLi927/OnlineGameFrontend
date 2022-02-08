@@ -120,7 +120,7 @@
       .then(res => {
         let userRes = res.data
         console.log(res)
-        console.log(this)
+        //console.log(this)
         this.$store.dispatch('common/setUser', userRes)
         this.setUser(userRes)
         console.log(this.user)
