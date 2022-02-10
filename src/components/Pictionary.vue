@@ -1,6 +1,5 @@
 <template>
   <div class="pictionary-container clearfix">
-    
     <!-- 输入room code的地方 -->
     <div class="shadow" :class="isShadow">
       <div class="enter-room-id-wrapper" :class="isEnterRoomId">
@@ -11,7 +10,7 @@
           <h1>ROOM CODE</h1>
         </div>
         <div class="room-code-input-box">
-          <input type="text" v-model="enteredRoomCode">
+          <input type="text" v-model="enteredRoomCode" />
         </div>
         <div class="join-room-wrapper">
           <button class="join-room-btn" @click="joinRoomWithCode">JOIN</button>
@@ -22,30 +21,32 @@
     <!-- 一进来pictionary游戏显示的 -->
     <div class="pictionary-menu-wrapper" :class="isMenuShow">
       <div class="pictionary-title-wrapper">
-          <h1>Pictionary</h1>
+        <h1>Pictionary</h1>
       </div>
       <div class="pictionary-menu-content">
-          <div class="pictionary-image-wrapper">
-            <img src="../assets/4296619.png" width="200px" height="200px">
+        <div class="pictionary-image-wrapper">
+          <img src="../assets/4296619.png" width="200px" height="200px" />
+        </div>
+        <div class="pictionary-menu-list">
+          <div class="create-room">
+            <button class="create-room-btn" @click="showGame">
+              New Room !
+            </button>
           </div>
-          <div class="pictionary-menu-list">
-            <div class="create-room">
-              <button class="create-room-btn" @click="showGame">New Room !</button>
-            </div>
-            <div class="enter-room-code">
-              <button class="enter-room-code-btn"  @click="enterRoomId">Enter Room Code</button>
-            </div>
-            <div class="pictionary-game-rules">
-              <button class="game-rules-btn">
-                About Pictionary
-              </button>
-            </div>
+          <div class="enter-room-code">
+            <button class="enter-room-code-btn" @click="enterRoomId">
+              Enter Room Code
+            </button>
           </div>
+          <div class="pictionary-game-rules">
+            <button class="game-rules-btn">About Pictionary</button>
+          </div>
+        </div>
       </div>
     </div>
-    
+
     <div class="word-wrapper" :class="isShowWord">
-        <h2>_ _ _ _ _</h2>
+      <h2>{{question}}</h2>
     </div>
     <!-- 游戏页面 -->
     <div class="main-area" :class="isShowMainArea">
@@ -54,36 +55,34 @@
           <tr v-for="(u, index) in playerList" :key="index">
             <td>
               <div class="player">
-                <div class="player-rank">
-                    #1
-                </div>
+                <div class="player-rank">#1</div>
                 <div class="player-avatar">
                   <div class="avatar-wrapper">
-                    <img>
-                  </div>   
+                    <img />
+                  </div>
                 </div>
                 <!-- <div class="player-info"> -->
-                <div class="player-name">{{u.username}}</div>
-                  
+                <div class="player-name">{{ u.username }}</div>
+
                 <!-- </div> -->
                 <div class="player-points">2000</div>
               </div>
             </td>
           </tr>
-         
         </table>
-      </div>     
+      </div>
       <div class="game-screen">
         <div class="game-info">
           <div>
-            <button @click="gameProccess">test</button>
+            <button @click="gameStart">test</button>
           </div>
 
           <div class="toolkit">
             <div class="color-chosen-wrapper">
-              <div class="color-chosen" :style="{backgroundColor: strokeColor}">
-                
-              </div>
+              <div
+                class="color-chosen"
+                :style="{ backgroundColor: strokeColor }"
+              ></div>
             </div>
             <div class="palette">
               <div class="palette-row">
@@ -129,7 +128,7 @@
                 ></div>
               </div>
               <div class="palette-row">
-                  <div
+                <div
                   class="color-option"
                   style="background: rgb(0, 0, 0)"
                   @click="changeColor('rgb(0, 0, 0)')"
@@ -176,34 +175,58 @@
 
             <div class="stroke-type">
               <div class="pen-wrapper">
-                <img src="https://skribbl.io/res/pen.gif" height="50px">
+                <img src="https://skribbl.io/res/pen.gif" height="50px" />
               </div>
-              <div class="ereaser-wrapper"> 
-                <img src="https://skribbl.io/res/rubber.gif" width="40px">   
+              <div class="ereaser-wrapper">
+                <img src="https://skribbl.io/res/rubber.gif" width="40px" />
               </div>
             </div>
           </div>
           <!--https://skribbl.io/res/clock.gif-->
           <div class="timer-wrapper">
-            <div class="timer">{{drawTimeSec}}</div>
+            <div class="timer">{{ drawTimeSec }}</div>
           </div>
         </div>
         <div class="canvas-wrapper">
-          
           <div class="canvas-container">
-            <canvas ref="canv" id="canv" height="546px" width="861.3px" 
-            @mousedown="findxy('down', $event)" 
-            @mousemove="findxy('move', $event)"
-            @mouseup="findxy('up', $event)"
-            @mouseout="findxy('out', $event)"
+            <canvas
+              ref="canv"
+              id="canv"
+              height="546px"
+              width="861.3px"
+              @mousedown="findxy('down', $event)"
+              @mousemove="findxy('move', $event)"
+              @mouseup="findxy('up', $event)"
+              @mouseout="findxy('out', $event)"
             ></canvas>
           </div>
           <div class="mute clearfix" :class="isMuteActive">
             <div class="process-info">
-              <p>Game will start in {{gameStartDelay}}s</p>
+              <p :class="gameStartInfoShow" class="gameStartInfo">Game will start in {{ gameStartDelay }}s</p>
+              <p :class="roundInfoShow" class="roundInfo">This is {{drawer.username}} round</p>
+              <div class="roundSummary" :class="roundSummaryShow">
+                Time is up!
+                The word is {{word}}
+              </div>
+              <div class="chooseWord" :class="chooseWordShow">
+                  <div class="chooseWord-title">
+                    Please choose a word {{roundDelay}}
+                  </div>
+
+                  <div class="word-container">
+                    <div class="word-btn-wrapper" @click="chosenWord(w)" v-for="(w, index) in wordList" :key="index">
+                      {{w}}
+                    </div>
+                    
+                    <!-- <button v-for="(w, index) in wordList" :key="index" >
+                      {{w}}
+                    </button> -->
+                    
+                  </div>
+                  
+              </div>
             </div>
           </div>
-          
         </div>
         <div class="game-footer">
           <div class="leave-wrapper">
@@ -213,381 +236,541 @@
       </div>
       <div class="chat-box-wrapper">
         <div class="chat-box" id="chatBox" ref="chatBox">
-          <div class="chat-row">
-            <div class="chat-row-user">
-              Antony:
-            </div>
-            <div class="chat-row-msg">
-              hello
-            </div>
-          </div>
-          <div class="answer-correct-row">
-            Li's answer is correct !
-          </div>
+          <!-- <div class="chat-row">
+            <div class="chat-row-user">Antony:</div>
+            <div class="chat-row-msg">hello</div>
+          </div> -->
+          <!-- <div class="answer-correct-row">Li's answer is correct !</div> -->
         </div>
         <div class="input-box">
-          <input type="text" v-model="message" class="input-msg"/> 
+          <input type="text" v-model="message" class="input-msg" />
           <button @click="sendMsg" class="btn-send">Send</button>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 
 <script>
-    import {mapState} from 'vuex'
-    import 'animate.css';
-    // import axios from 'axios';
-    export default {
-      name: "Pictionary",
-      mounted() {
-        this.initCanvas();
-        this.connectWebSocket();
-      },
-      computed: {
-        ...mapState('common', {
-          user: 'user',
-        }),
-      },
-      data() {
-          return {
-            message: '',
-            drawTimeSec: 90, 
-            canvas: null,
-            ctx: null,
-            prevX: 0,
-            prevY: 0,
-            currX: 0,
-            currY: 0,
-            flag: false,
-            dot_flag: false,
-            strokeColor: "black",
-            strokeWidth: 2,
-            websocket: null,
-            isShadow: '',
-            isEnterRoomId: [''],
-            isMenuShow: 'active',
-            isShowMainArea: '',
-            isShowWord: '',
-            playerList: [], // a list of players that current player is in
-            roundStart: false, // whether current round starts 
-            roomCode: '', // room code of current room
-            enteredRoomCode: '',
-            isMuteActive: '',
-            gameStartDelay: 10,
+import { mapState } from "vuex";
+import "animate.css";
+// import axios from 'axios';
+export default {
+  name: "Pictionary",
+  mounted() {
+    this.initCanvas();
+    this.connectWebSocket();
+  },
+  computed: {
+    ...mapState("common", {
+      user: "user",
+    }),
+    question: {
+      get() {
+        let res = "";
+        let arr = this.word.split(" ");
+        for (let i = 0; i < arr.length; i++) {
+          let num = arr[i].length;
+          for (let a = 1; a<= num; a++) {
+            res = res + "_ ";
+          }
+          res = res + '\xa0\xa0';
+          console.log(res);
+        }
+        return res;
+      }
+    },
+  },
+  data() {
+    return {
+      message: "",
+      drawTimeSec: 10,
+      canvas: null,
+      ctx: null,
+      prevX: 0,
+      prevY: 0,
+      currX: 0,
+      currY: 0,
+      flag: false,
+      dot_flag: false,
+      strokeColor: "black",
+      strokeWidth: 2,
+      websocket: null,
+      isShadow: "",
+      isEnterRoomId: [""],
+      isMenuShow: "active",
+      isShowMainArea: "",
+      isShowWord: "",
+      playerList: [], // a list of players that current player is in
+      roundStart: false, // whether current round starts
+      roomCode: "", // room code of current room
+      enteredRoomCode: "",
+      isMuteActive: "",
+      gameStartDelay: 5, // 全局游戏开始前的那段delay
+      roundOver: false,
+      roundDelay: 5, // 每轮游戏开始前的delay
+      roundSummaryDelay: 6,
+      gameStartInfoShow: [],
+      roundInfoShow: [],
+      roundSummaryShow: [],
+      word: '',
+      wordList: [], // save three words requested from database and showed for player to choose one 
+      drawer: {},
+      chooseWordShow: [],
+      curRound: 0,
+      isCurUserAnswerCorrect: false,
+    };
+  },
+  watch: {},
+  methods: {
+    joinRoomWithCode() {
+      // todo 关于输入的code合法性判断
+  
+      let data = {
+        status: "",
+        msg: "",
+        msgType: "joinWithRoomCode",
+        data: {
+          user: this.user,
+          roomCode: this.enteredRoomCode,
+        },
+      };
+
+      console.log(data);
+
+      this.websocket.send(JSON.stringify(data));
+      this.roomCode = this.enteredRoomCode;
+
+      this.isEnterRoomId = ["non-active"];
+      this.isShadow = "";
+      this.isMenuShow = "";
+      this.isShowWord = "active";
+      this.isShowMainArea = "flex-active";
+    },
+    enterRoomId() {
+      this.isShadow = ["fadeIn", "active"];
+      this.isEnterRoomId = ["slideInUp"];
+      this.isMenuShow = "";
+    },
+
+    closeEnterRoom() {
+      this.isEnterRoomId = ["non-active"];
+      this.isShadow = "";
+      this.isMenuShow = "active";
+    },
+
+    showGame() {
+      let data = {
+        status: "",
+        msg: "",
+        msgType: "createNewRoom",
+        data: {
+          user: this.user,
+        },
+      };
+
+      this.websocket.send(JSON.stringify(data));
+      this.isMenuShow = "";
+      this.isShowWord = "active";
+      this.isShowMainArea = "flex-active";
+    },
+
+    leaveGame() {
+      this.isShowMainArea = "";
+      this.isMenuShow = "active";
+      this.isShowWord = "";
+    },
+
+    /*initialize canvas */
+    initCanvas() {
+      this.canvas = this.$refs.canv;
+      console.log(this.canvas);
+      this.ctx = this.canvas.getContext("2d");
+      console.log(this.ctx);
+    },
+
+    findxy(res, e) {
+      if (res == "down") {
+        console.log("down");
+        console.log(e);
+        this.prevX = this.currX;
+        this.prevY = this.currY;
+        this.currX = e.clientX - this.canvas.offsetLeft;
+        this.currY = e.clientY - this.canvas.offsetTop;
+
+        this.flag = true;
+        this.dot_flag = true;
+        if (this.dot_flag) {
+          this.ctx.beginPath();
+          this.ctx.fillStyle = this.strokeColor;
+          this.ctx.fillRect(this.currX, this.currY, 2, 2);
+          this.ctx.closePath();
+          let data = {
+            status: "",
+            msg: "",
+            msgType: "syncStroke",
+            data: {
+              roomCode: this.roomCode,
+              action: "down",
+              prevX: this.prevX,
+              prevY: this.prevY,
+              currX: this.currX,
+              currY: this.currY,
+              strokeColor: this.strokeColor,
+            },
           };
-      },
-      watch: {
-        
-      },
-      methods: {
-        joinRoomWithCode() {
-          // todo 关于输入的code合法性判断
+          data = JSON.stringify(data);
+          this.websocket.send(data);
+          this.dot_flag = false;
+        }
+      }
+      if (res == "up" || res == "out") {
+        this.flag = false;
+      }
+      if (res == "move") {
+        if (this.flag) {
+          this.prevX = this.currX;
+          this.prevY = this.currY;
+          this.currX = e.clientX - this.canvas.offsetLeft;
+          this.currY = e.clientY - this.canvas.offsetTop;
+          this.draw();
+        }
+      }
+    },
 
-          let data = {
-            status: '',
-            msg: '', 
-            msgType: 'joinWithRoomCode',
+    draw() {
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.prevX, this.prevY);
+      this.ctx.lineTo(this.currX, this.currY);
+      this.ctx.strokeStyle = this.strokeColor;
+      this.ctx.lineWidth = this.strokeWidth;
+      this.ctx.stroke();
+      this.ctx.closePath();
+      let data = {
+        status: "",
+        msg: "",
+        msgType: "syncStroke",
+        data: {
+          roomCode: this.roomCode,
+          action: "move",
+          prevX: this.prevX,
+          prevY: this.prevY,
+          currX: this.currX,
+          currY: this.currY,
+          strokeColor: this.strokeColor,
+        },
+      };
+      data = JSON.stringify(data);
+      this.websocket.send(data);
+    },
+
+    changeColor(clr) {
+      this.strokeColor = clr;
+    },
+
+    /*websocket */
+    connectWebSocket() {
+      //判断当前浏览器是否支持WebSocket
+      if ("WebSocket" in window) {
+        this.websocket = new WebSocket("ws://localhost:8081/pictionaryServer");
+      } else {
+        alert("Not support websocket");
+      }
+
+      //连接发生错误的回调方法
+      // this.websocket.onerror = function () {
+      //     setMessageInnerHTML("error");
+      // };
+      // //连接成功建立的回调方法
+      this.websocket.onopen = function () {
+        //setMessageInnerHTML("Loc MSG: 成功建立连接");
+        console.log("vue connect success!");
+      };
+      //接收到消息的回调方法
+      this.websocket.onmessage = (event) => {
+        let receivedData = JSON.parse(event.data);
+
+        if (receivedData.msgType == "roomCode") {
+          this.roomCode = receivedData.data;
+          console.log(this.roomCode);
+        }
+
+        if (receivedData.msgType == "playerList") {
+          this.playerList = receivedData.data;
+          console.log(this.playerList);
+        }
+
+        if (receivedData.msgType == "resWords") {
+          this.wordList = receivedData.data;
+          console.log(this.wordList);
+        }
+
+        if (receivedData.msgType == "gameProcess") {
+          if (this.curRound > this.playerList.length) {
+            //todo
+          }
+
+          this.drawer = receivedData.data;
+          let req = {
+            status: "",
+            msg: "",
+            msgType: "requestWords",
             data: {
-              user: this.user,
-              roomCode: this.enteredRoomCode,
             },
+          };
+          this.websocket.send(JSON.stringify(req));
+          console.log(this.user)
+          console.log(this.drawer)
+          if(this.user.userId == this.drawer.userId) {
+            this.isMuteActive = "flex-active";
+            this.chooseWordShow = ["active", "slideInUp"];
+            this.chooseWordMethod(this.curRound);
+          } else {
+            this.isMuteActive = "flex-active";
+            this.roundInfoShow = ["active", "slideInUp"];
+            this.roundInfo(this.curRound);
           }
+          console.log(receivedData.data)
+        }
 
-          console.log(data)
+        if (receivedData.msgType == "timeIsUp") {
+          this.roundSummaryShow = ["active", "slideInUp"];
+          this.roundSummary(); 
+        }
 
-          this.websocket.send(JSON.stringify(data))
-          this.roomCode = this.enteredRoomCode;
+        if (receivedData.msgType == "wordChosen") {
+          this.word = receivedData.data;
+          console.log(receivedData.data)
+        }
 
-          this.isEnterRoomId = ['non-active'];
-          this.isShadow = '';
-          this.isMenuShow = '';
-          this.isShowWord = 'active';
-          this.isShowMainArea = 'flex-active';
-        },
-        enterRoomId() {
-          this.isShadow = ['fadeIn', 'active'];
-          this.isEnterRoomId = ['slideInUp'];
-          this.isMenuShow = '';
-        },
+        if (receivedData.msgType == "round") {
+          this.curRound = receivedData.data;
+        }
 
-        closeEnterRoom() {
-          this.isEnterRoomId = ['non-active'];
-          this.isShadow = '';
-          this.isMenuShow = 'active';
-        },
+        if (receivedData.msgType == "chatMsg") {
+          let chatRow = document.createElement("div");
+          chatRow.classList = ["chat-row"];
 
-        showGame() {
-          let data = {
-            status: '',
-            msg: '', 
-            msgType: 'createNewRoom',
-            data: {
-              user: this.user,
-            },
-          }
+          let chatRowUser = document.createElement("div");
+          chatRowUser.classList = ["chat-row-user"];
+          chatRowUser.innerText = "Antony:";
 
-          this.websocket.send(JSON.stringify(data));
-          this.isMenuShow = '';
-          this.isShowWord = 'active';
-          this.isShowMainArea = 'flex-active';
-        },
+          let chatRowMsg = document.createElement("div");
+          chatRowMsg.classList = ["chat-row-msg"];
+          chatRowMsg.innerText = receivedData.data.chatMessage;
+          chatRow.appendChild(chatRowUser);
+          chatRow.appendChild(chatRowMsg);
+          //console.log(this.$refs.chatBox)
+          this.$refs.chatBox.appendChild(chatRow);
+          this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
+        }
 
-        leaveGame() {
-          this.isShowMainArea = '';
-          this.isMenuShow = 'active';
-          this.isShowWord = '';
-        },
+        if (receivedData.msgType == "rightMsg") {
+          //<div class="answer-correct-row">Li's answer is correct !</div>
+          let chatRow = document.createElement("div");
+          chatRow.classList = ["answer-correct-row"];
+          let a = receivedData.data.userId == this.user.userId ? "Your" : receivedData.data.username + "'s"
+          chatRow.innerText =  a + " answer is correct!";
+          this.$refs.chatBox.appendChild(chatRow);
+          this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
+        }
 
-        /*initialize canvas */
-        initCanvas() {
-          this.canvas = this.$refs.canv;
-          console.log(this.canvas)
-          this.ctx = this.canvas.getContext("2d");
-          console.log(this.ctx)
-        },
-
-        findxy(res, e) {
-          if (res == "down") {
-            console.log("down")
-            console.log(e)
-              this.prevX = this.currX;
-              this.prevY = this.currY;
-              this.currX = e.clientX - this.canvas.offsetLeft;
-              this.currY = e.clientY - this.canvas.offsetTop;
-
-              this.flag = true;
-              this.dot_flag = true;
-              if (this.dot_flag) {
-                this.ctx.beginPath();
-                this.ctx.fillStyle = this.strokeColor;
-                this.ctx.fillRect(this.currX, this.currY, 2, 2);
-                this.ctx.closePath();
-                let data = {
-                  status: '',
-                  msg: '',
-                  msgType: 'syncStroke',
-                  data: {
-                    roomCode: this.roomCode,
-                    action: 'down',
-                    prevX: this.prevX,
-                    prevY: this.prevY,
-                    currX: this.currX,
-                    currY: this.currY,
-                    strokeColor: this.strokeColor,
-                  },
-                }
-                data = JSON.stringify(data)
-                this.websocket.send(data)
-                this.dot_flag = false;
-            }
-          }
-          if (res == "up" || res == "out") {
-            this.flag = false;
-          }
-          if (res == "move") {
-            if (this.flag) {
-              this.prevX = this.currX;
-              this.prevY = this.currY;
-              this.currX = e.clientX - this.canvas.offsetLeft;
-              this.currY = e.clientY - this.canvas.offsetTop;
-              this.draw();
-            }
-          }
-        },
-
-        draw() {
+        //console.log(event.data);
+        if (receivedData.msgType == "syncStroke") {
+          if (receivedData.data.action == "down") {
             this.ctx.beginPath();
-            this.ctx.moveTo(this.prevX, this.prevY);
-            this.ctx.lineTo(this.currX, this.currY);
-            this.ctx.strokeStyle = this.strokeColor;
-            this.ctx.lineWidth = this.strokeWidth;
+            this.ctx.fillStyle = receivedData.data.strokeColor;
+            this.ctx.fillRect(
+              receivedData.data.currX,
+              receivedData.data.currY,
+              2,
+              2
+            );
+            this.ctx.closePath();
+          } else if (receivedData.data.action == "move") {
+            this.ctx.beginPath();
+            this.ctx.moveTo(receivedData.data.prevX, receivedData.data.prevY);
+            this.ctx.lineTo(receivedData.data.currX, receivedData.data.currY);
+            this.ctx.strokeStyle = receivedData.data.strokeColor;
+            this.ctx.lineWidth = 2;
             this.ctx.stroke();
             this.ctx.closePath();
-            let data = {
-              status: '',
-              msg: '',
-              msgType: 'syncStroke',
-              data: {
-                roomCode: this.roomCode,
-                action: 'move',
-                prevX: this.prevX,
-                prevY: this.prevY,
-                currX: this.currX,
-                currY: this.currY,
-                strokeColor: this.strokeColor,
-              },
-            }
-            data = JSON.stringify(data)
-            this.websocket.send(data)
-        },
+          }
+        }
+      };
+      //连接关闭的回调方法
+      this.websocket.onclose = function () {
+        console.log("close success!");
+      };
+      // //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+      // window.onbeforeunload = function () {
+      //     websocket.close();
+      // }
+    },
 
-        changeColor(clr) {
-          this.strokeColor = clr;
-        },
+    sendMsg() {
+      if (this.message == this.word && this.isCurUserAnswerCorrect == false) {
+        let data = {
+          status: "",
+          msg: "",
+          msgType: "rightMsg",
+          data: {
+            user: this.user,
+            roomCode: this.roomCode,
+          },
+        };
+        this.websocket.send(JSON.stringify(data));
+        this.message = "";  
+        this.isCurUserAnswerCorrect = true;
+      } else {
+        // 如果当前用户已经回答对了，则不能再发这个单词了
+        if (this.message == this.word && this.isCurUserAnswerCorrect == true) {
+          return;
+        }
+        let data = {
+          status: "",
+          msg: "",
+          msgType: "chatMsg",
+          data: {
+            chatMessage: this.message,
+            roomCode: this.roomCode,
+          },
+        };
+        this.websocket.send(JSON.stringify(data));
+        this.message = "";  
+      }
+      
+    },
 
-
-        /*websocket */
-        connectWebSocket(){
-          //判断当前浏览器是否支持WebSocket
-            if ("WebSocket" in window) {
-                this.websocket = new WebSocket("ws://localhost:8081/pictionaryServer");
-            } else {
-                alert("Not support websocket");
-            }
-
-            //连接发生错误的回调方法
-            // this.websocket.onerror = function () {
-            //     setMessageInnerHTML("error");
-            // };
-            // //连接成功建立的回调方法
-            this.websocket.onopen = function () {
-                //setMessageInnerHTML("Loc MSG: 成功建立连接");
-                console.log("vue connect success!");
-            };
-            //接收到消息的回调方法
-            this.websocket.onmessage = (event) => {
-              let receivedData = JSON.parse(event.data)
-
-              if (receivedData.msgType == 'roomCode') {
-                this.roomCode = receivedData.data;
-                console.log(this.roomCode)
-              }
-
-              if (receivedData.msgType == 'playerList') {
-                
-                this.playerList = receivedData.data;
-                console.log(this.playerList)
-              }
-
-              if (receivedData.msgType == 'chatMsg') {
-                let chatRow = document.createElement("div");
-                chatRow.classList = ["chat-row"];
-
-                let chatRowUser = document.createElement("div");
-                chatRowUser.classList = ["chat-row-user"];
-                chatRowUser.innerText = "Antony:"
-
-                let chatRowMsg = document.createElement("div");
-                chatRowMsg.classList = ["chat-row-msg"]
-                chatRowMsg.innerText = receivedData.data.chatMessage;
-                chatRow.appendChild(chatRowUser);
-                chatRow.appendChild(chatRowMsg);
-                //console.log(this.$refs.chatBox)
-                this.$refs.chatBox.appendChild(chatRow);
-                this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
-              }
-              //console.log(event.data);
-              if (receivedData.msgType == 'syncStroke') {
-                if(receivedData.data.action == 'down') {
-                this.ctx.beginPath();
-                this.ctx.fillStyle = receivedData.data.strokeColor;
-                this.ctx.fillRect(receivedData.data.currX, receivedData.data.currY, 2, 2);
-                this.ctx.closePath();
-              } else if (receivedData.data.action == 'move') {
-                this.ctx.beginPath();
-                this.ctx.moveTo(receivedData.data.prevX, receivedData.data.prevY);
-                this.ctx.lineTo(receivedData.data.currX, receivedData.data.currY);
-                this.ctx.strokeStyle = receivedData.data.strokeColor;
-                this.ctx.lineWidth = 2;
-                this.ctx.stroke();
-                this.ctx.closePath();
-              } 
-            }
-          };
-            //连接关闭的回调方法
-            this.websocket.onclose = function () {
-              console.log("close success!");
-            };
-            // //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
-            // window.onbeforeunload = function () {
-            //     websocket.close();
-            // }
-        },
-        
-        sendMsg() {
+    // 这个方法要由服务器通知执行 
+    gameStart() {
+      this.isMuteActive = "flex-active";
+      this.gameStartInfoShow = ["active"];
+      this.gameStartTimer();
+    },
+    
+    // after all users are ready, this timer will start and a line of sentence will show on the screen
+    gameStartTimer() {
+      console.log("start delay");
+      if (this.gameStartDelay <= 0) {
+        if(this.playerList[0].userId == this.user.userId) {
           let data = {
-            status: '',
-            msg: '',
-            msgType: 'chatMsg',
+            status: "",
+            msg: "",
+            msgType: "gameProcess",
             data: {
-              chatMessage: this.message,
               roomCode: this.roomCode,
+              round: 1,
             },
           }
           this.websocket.send(JSON.stringify(data));
-          this.message = '';
+        }
+        this.isMuteActive = "";
+        this.gameStartInfoShow = [];
+        this.gameStartDelay = 10;
+        //this.gameProccess(1);
+        return;
+      }
+      setTimeout(() => {
+        this.gameStartDelay = this.gameStartDelay - 1;
+        this.gameStartTimer();
+      }, 1000);
+    },
+
+    chooseWordMethod(round) {
+      if (this.roundDelay <= 0) {
+        console.log("round info call back");
+        this.isMuteActive = "";
+        this.chooseWordShow = [];
+        this.roundDelay = 5;
+        this.countDown(round); 
+        return;
+      }
+      setTimeout(() => {
+        this.roundDelay = this.roundDelay - 1;
+        this.chooseWordMethod(round);
+      }, 1000);
+    },
+
+    //this method is related to round info count down 
+    roundInfo(round) {
+      if (this.roundDelay <= 0) {
+        console.log("round info call back");
+        this.roundInfoShow = [];
+        this.roundDelay = 5;
+        return;
+      }
+      setTimeout(() => {
+        this.roundDelay = this.roundDelay - 1;
+        this.roundInfo(round);
+      }, 1000);
+    },
+    
+
+    //this method is related to the count down of the drawing process for 90s
+    countDown() {
+      if (this.drawTimeSec <= 0) {
+        console.log("count down call back");
+        this.drawTimeSec = 10;
+        this.isMuteActive = "flex-active";
+        let data = {
+          status: "",
+          msg: "",
+          msgType: "timeIsUp",
+          data: {
+            roomCode: this.roomCode,
+          },
+        }
+        this.websocket.send(JSON.stringify(data));
+        //this.roundSummaryShow = ["active", "slideInUp"];
+        //this.roundSummary(); 
+        return;
+      }
+      setTimeout(() => {
+        this.drawTimeSec = this.drawTimeSec - 1;
+        this.countDown();
+      }, 1000);
+    },
+    
+
+    // after drawing and guessing, a summary of this round will appear
+    roundSummary() {
+      if (this.roundSummaryDelay <= 1) {
+        this.roundSummaryShow = [];
+      }
+      if (this.roundSummaryDelay <= 0) {
+        console.log("round summary call back");
+        this.roundSummaryDelay = 6;
+        this.roundSummaryShow = "";
+        // 给服务器发送this.curRound + 1, msgType 是gameProcess 来开启下一轮
+        //this.gameProccess(round + 1); 
+        return;
+      }
+      setTimeout(() => {
+        this.roundSummaryDelay = this.roundSummaryDelay - 1;
+        this.roundSummary();
+      }, 1000);
+    },
+
+    chosenWord(w) {
+      this.word = w;
+      let data = {
+        status: "",
+        msg: "",
+        msgType: "wordChosen",
+        data: {
+           word: this.word,
+           roomCode: this.roomCode,
         },
-        countDown(secs) {
-          console.log(secs)
-          if(secs <= 0){
-            /**
-             * 在这里处理一轮结束之后的逻辑
-             */
-            return;
-          } 
-          setTimeout(() => {
-            secs = secs - 1;
-            this.countDown(secs);
-          }, 1000)
-        },
+      };
 
+      this.websocket.send(JSON.stringify(data));
+      this.chooseWordShow = [];
+    }
 
-        gameStartTimer() {
-          console.log("start delay")
-          if (this.gameStartDelay <= 0) {
-            this.isMuteActive = "";
-            this.gameStartDelay = 10;
-            return
-          }
-          setTimeout(() => {
-            this.gameStartDelay = this.gameStartDelay - 1;
-            this.gameStartTimer();
-          }, 1000)
-        },
-        
-
-        gameProccess() {
-          //
-          console.log("ssss")
-          this.isMuteActive = "flex-active";
-          this.gameStartTimer();
-
-          // this.isMuteActive = "";
-          // this.gameStartDelay = 10;
-
-          console.log("mute")
-          
-          //
-          // todo
-          for (let i = 0; i < this.playerList.length; i++) {
-              // it's playList[i]'s turn 
-              // if playerList[i] == user: choose a word 
-              // this word should be sent to other players in the same room
-              // else wait 
-          }
-          
-
-
-
-        },
-
-        // sleep(numberMillis) { 
-        //   var now = new Date(); 
-        //   var exitTime = now.getTime() + numberMillis; 
-        //   while (now.getTime() < exitTime) { 
-        //     now = new Date();
-        //   } 
-        // },
-
-
-
-
-      },
-  
-    };
+  },
+};
 
     // function erase() {
     //     var m = confirm("Want to clear");
@@ -644,7 +827,7 @@
   background-color: rgba(3, 3, 3, 0.3);
   float: left;
   z-index: 999;
-  animation-duration: .5s;
+  animation-duration: 0.5s;
 }
 
 @keyframes fadeIn {
@@ -664,11 +847,11 @@
 @keyframes slideInUp {
   from {
     transform: translate3d(0, 100%, 0);
-    visibility: hidden;
+    visibility: visible;
   }
 
   to {
-    visibility:visible;
+    
     transform: translate3d(0, 0, 0);
   }
 }
@@ -694,14 +877,12 @@
   animation-name: slideOutDown !important;
 }
 
-
 .pictionary-container .shadow .enter-room-id-wrapper {
   /* display: none; */
   width: 600px;
   height: 350px;
   background-color: white;
   margin: 150px auto;
- 
 }
 .pictionary-container .shadow .enter-room-id-wrapper .close-wrapper {
   width: 50px;
@@ -717,10 +898,13 @@
   background-color: transparent;
 }
 
-.pictionary-container .shadow .enter-room-id-wrapper .close-wrapper button:hover {
+.pictionary-container
+  .shadow
+  .enter-room-id-wrapper
+  .close-wrapper
+  button:hover {
   cursor: pointer;
 }
-
 
 .pictionary-container .shadow .enter-room-id-wrapper .enter-room-code-title {
   height: 100px;
@@ -735,7 +919,11 @@
   width: 100%;
 }
 
-.pictionary-container .shadow .enter-room-id-wrapper .room-code-input-box input {
+.pictionary-container
+  .shadow
+  .enter-room-id-wrapper
+  .room-code-input-box
+  input {
   margin: 0 30px;
   height: 80px;
   width: 500px;
@@ -761,14 +949,21 @@
   background-origin: border-box;
 }
 
-.pictionary-container .shadow .enter-room-id-wrapper .join-room-wrapper button:hover {
+.pictionary-container
+  .shadow
+  .enter-room-id-wrapper
+  .join-room-wrapper
+  button:hover {
   cursor: pointer;
   background-color: rgb(73, 113, 136);
 }
-.pictionary-container .shadow .enter-room-id-wrapper .join-room-wrapper button:active {
+.pictionary-container
+  .shadow
+  .enter-room-id-wrapper
+  .join-room-wrapper
+  button:active {
   border: 3px black solid;
 }
-
 
 .pictionary-container .pictionary-menu-wrapper {
   display: none;
@@ -793,7 +988,10 @@
   display: flex;
 }
 
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-image-wrapper {
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-image-wrapper {
   /* background-color: rgb(255, 0, 0); */
   display: flex;
   align-items: center;
@@ -802,18 +1000,29 @@
   height: 250px;
 }
 
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list {
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list {
   margin-top: 35px;
   width: 350px;
   height: 180px;
 }
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list div {
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list
+  div {
   height: 60px;
   width: 350px;
-  
 }
 
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .create-room button{
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list
+  .create-room
+  button {
   font-weight: bold;
   font-size: 20px;
   border: 4px solid black;
@@ -822,13 +1031,15 @@
   height: 40px;
   width: 250px;
   margin: 2px 42px;
-  background-color:rgb(255, 191, 0);
+  background-color: rgb(255, 191, 0);
 }
 
-
-
-
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .enter-room-code button{
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list
+  .enter-room-code
+  button {
   font-weight: bold;
   font-size: 20px;
   border: 4px solid black;
@@ -837,9 +1048,14 @@
   height: 40px;
   width: 250px;
   margin: 2px 42px;
-  background-color:rgb(255, 191, 0);
+  background-color: rgb(255, 191, 0);
 }
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .pictionary-game-rules button{
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list
+  .pictionary-game-rules
+  button {
   font-weight: bold;
   font-size: 20px;
   border: 4px solid black;
@@ -848,17 +1064,30 @@
   height: 40px;
   width: 250px;
   margin: 2px 42px;
-  background-color:rgb(255, 191, 0);
+  background-color: rgb(255, 191, 0);
 }
 
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .create-room button:hover, 
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .enter-room-code button:hover, 
-.pictionary-container .pictionary-menu-wrapper .pictionary-menu-content .pictionary-menu-list .pictionary-game-rules button:hover {
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list
+  .create-room
+  button:hover,
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list
+  .enter-room-code
+  button:hover,
+.pictionary-container
+  .pictionary-menu-wrapper
+  .pictionary-menu-content
+  .pictionary-menu-list
+  .pictionary-game-rules
+  button:hover {
   cursor: pointer;
   background-color: rgb(255, 203, 0);
 }
-
-
 
 .pictionary-container .word-wrapper {
   display: none;
@@ -879,7 +1108,7 @@
 }
 
 .pictionary-container .main-area .rank-wrapper {
-  background-color: rgba(0, 0, 0, .25);
+  background-color: rgba(0, 0, 0, 0.25);
   height: 550px;
   width: 20%;
 }
@@ -910,13 +1139,19 @@
   display: flex;
 }
 
-.pictionary-container .main-area .rank-wrapper .rank-table tr td .player .player-rank {
+.pictionary-container
+  .main-area
+  .rank-wrapper
+  .rank-table
+  tr
+  td
+  .player
+  .player-rank {
   font-size: 24px;
   height: 60px;
   line-height: 60px;
   width: 45px;
   text-align: center;
- 
 }
 /* .pictionary-container .main-area .rank-wrapper .rank-table tr td .player .player-info {
   height: 60px;
@@ -924,14 +1159,29 @@
   text-align: center;
   
 } */
-.pictionary-container .main-area .rank-wrapper .rank-table tr td .player .player-avatar {
+.pictionary-container
+  .main-area
+  .rank-wrapper
+  .rank-table
+  tr
+  td
+  .player
+  .player-avatar {
   height: 60px;
   line-height: 60px;
   width: 55px;
   text-align: center;
   border-radius: 50%;
 }
-.pictionary-container .main-area .rank-wrapper .rank-table tr td .player .player-avatar .avatar-wrapper {
+.pictionary-container
+  .main-area
+  .rank-wrapper
+  .rank-table
+  tr
+  td
+  .player
+  .player-avatar
+  .avatar-wrapper {
   margin: 5px auto;
   height: 50px;
   width: 50px;
@@ -939,22 +1189,32 @@
   background-color: hotpink;
 }
 
-.pictionary-container .main-area .rank-wrapper .rank-table tr td .player .player-name {
+.pictionary-container
+  .main-area
+  .rank-wrapper
+  .rank-table
+  tr
+  td
+  .player
+  .player-name {
   width: 100px;
   margin-left: 10px;
   height: 60px;
   line-height: 60px;
 }
 
-.pictionary-container .main-area .rank-wrapper .rank-table tr td .player .player-points {
+.pictionary-container
+  .main-area
+  .rank-wrapper
+  .rank-table
+  tr
+  td
+  .player
+  .player-points {
   height: 60px;
   line-height: 60px;
   width: 65px;
 }
-
-
-
-
 
 .pictionary-container .main-area .game-screen {
   background-color: green;
@@ -980,12 +1240,7 @@
   align-items: center;
 }
 
-.pictionary-container
-  .main-area
-  .game-screen
-  .game-info
-  .toolkit
-  .palette {
+.pictionary-container .main-area .game-screen .game-info .toolkit .palette {
   /* background-color: cadetblue; */
   margin-right: 5px;
   margin-left: 5px;
@@ -996,28 +1251,28 @@
   .main-area
   .game-screen9
   .game-info
-  .toolkit 
+  .toolkit
   .color-chosen-wrapper {
-    /*不知道为什么这里面的样式都没有起作用？ */
-    width: 90px;
-    /* background-color: yellowgreen; */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 5px;
-  }
+  /*不知道为什么这里面的样式都没有起作用？ */
+  width: 90px;
+  /* background-color: yellowgreen; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 5px;
+}
 
 .pictionary-container
   .main-area
   .game-screen
   .game-info
-  .toolkit 
+  .toolkit
   .color-chosen-wrapper
   .color-chosen {
-    width: 50px;
-    height: 50px;
-    background-color: rebeccapurple;
-  }
+  width: 50px;
+  height: 50px;
+  background-color: rebeccapurple;
+}
 
 .pictionary-container
   .main-area
@@ -1043,12 +1298,7 @@
   display: flex;
 }
 
-.pictionary-container
-  .main-area
-  .game-screen
-  .game-info
-  .toolkit
-  .stroke-type {
+.pictionary-container .main-area .game-screen .game-info .toolkit .stroke-type {
   width: 110px;
   /* background-color: royalblue; */
   height: 70px;
@@ -1062,34 +1312,34 @@
   .game-screen
   .game-info
   .toolkit
-  .stroke-type 
-  .pen-wrapper{
-    border: 2px transparent solid;
-    background-color: rgb(230, 230, 230);
-    width: 46px;
-    height: 46px;
-    padding: 0 auto;
-    background-clip: border-box;
+  .stroke-type
+  .pen-wrapper {
+  border: 2px transparent solid;
+  background-color: rgb(230, 230, 230);
+  width: 46px;
+  height: 46px;
+  padding: 0 auto;
+  background-clip: border-box;
 }
 .pictionary-container
   .main-area
   .game-screen
   .game-info
   .toolkit
-  .stroke-type 
-  .pen-wrapper img{
-    transform: translateX(10px);
+  .stroke-type
+  .pen-wrapper
+  img {
+  transform: translateX(10px);
 }
-
 
 .pictionary-container
   .main-area
   .game-screen
   .game-info
   .toolkit
-  .stroke-type 
-  .ereaser-wrapper{
-    border: 2px transparent solid;
+  .stroke-type
+  .ereaser-wrapper {
+  border: 2px transparent solid;
   background-color: rgb(230, 230, 230);
   width: 46px;
   height: 46px;
@@ -1101,31 +1351,29 @@
   .game-screen
   .game-info
   .toolkit
-  .stroke-type 
-  .ereaser-wrapper img{
-    transform: translateX(5px) translateY(6.25px);
-    
+  .stroke-type
+  .ereaser-wrapper
+  img {
+  transform: translateX(5px) translateY(6.25px);
 }
-
 
 .pictionary-container
   .main-area
   .game-screen
   .game-info
   .toolkit
-  .stroke-type 
-  .pen-wrapper:hover, 
-  .pictionary-container
+  .stroke-type
+  .pen-wrapper:hover,
+.pictionary-container
   .main-area
   .game-screen
   .game-info
   .toolkit
-  .stroke-type 
+  .stroke-type
   .ereaser-wrapper:hover {
-    border: 2px rgb(63, 63, 63) solid;
-    cursor: pointer;
-  }
-
+  border: 2px rgb(63, 63, 63) solid;
+  cursor: pointer;
+}
 
 .pictionary-container
   .main-area
@@ -1151,35 +1399,24 @@
   .palette
   .palette-row
   .color-option:hover {
-    border: 2px rgb(226, 226, 226) solid;
-    cursor: pointer;
-  }
+  border: 2px rgb(226, 226, 226) solid;
+  cursor: pointer;
+}
 
+.pictionary-container .main-area .game-screen .game-info .timer-wrapper {
+  height: 64px;
+  /* background-color: white; */
+  width: 64px;
+}
 
-.pictionary-container
-  .main-area
-  .game-screen
-  .game-info
-  .timer-wrapper {
-    height: 64px;
-    /* background-color: white; */
-    width: 64px;
-  }
-
-  .pictionary-container
-  .main-area
-  .game-screen
-  .game-info
-  .timer-wrapper
-  .timer {
-    font-size: 18px;
-    width: 64px;
-    height: 64px;
-    line-height: 71px;
-    text-align:center;
-    background-image: url("https://skribbl.io/res/clock.gif");
-  }
-
+.pictionary-container .main-area .game-screen .game-info .timer-wrapper .timer {
+  font-size: 18px;
+  width: 64px;
+  height: 64px;
+  line-height: 71px;
+  text-align: center;
+  background-image: url("https://skribbl.io/res/clock.gif");
+}
 
 .pictionary-container .main-area .game-screen .canvas-wrapper {
   background-color: white;
@@ -1194,22 +1431,140 @@
 .pictionary-container .main-area .game-screen .canvas-wrapper .mute {
   height: 546px;
   width: 861.3px;
-  background-color: rgba(29, 29, 29, 0.2);
+  background-color: transparent;
   position: relative;
   top: -550px;
-  display: none;
+  display: none;  /*to be changed*/
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
-.pictionary-container .main-area .game-screen .canvas-wrapper .mute .process-info {
-  line-height: 150px;
-  width: 600px;
-  height: 150px;
-  /* background-color: tomato; */
-  text-align: center;
-  font-size: 30px;
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info {
+    line-height: 150px;
+    width: 600px;
+    height: 500px;
+    /* background-color: tomato; */
+    text-align: center;
+    font-size: 30px;
+    display: flex;
+    justify-content: center;
+    align-items:center;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .gameStartInfo {
+    animation-duration: 0.5s;
+    display: none;
 }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundInfo {
+    display: none;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary {
+    display: none;
+    background-color: aquamarine;
+    width: 350px;
+    height: 480px;
+  }
+  
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .chooseWord {
+    display: none;
+    width: 500px;
+    height: 250px;
+    background-color: burlywood;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .chooseWord 
+  .chooseWord-title {
+    width: 500px;
+    height: 100px;
+    /* background-color: red; */
+    line-height: 100px;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .chooseWord
+  .word-container {
+    width: 500px;
+    height: 150px;
+    /* background-color: aqua; */
+    display: flex;
+    justify-content: start;
+    align-items: center;
+  }
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .chooseWord
+  .word-container
+  .word-btn-wrapper {
+    border: 2px transparent solid;
+    background-clip: border-box;
+    color: white;
+    line-height: 46px;
+    width: 96px;
+    height: 46px;
+    background-color: rgb(0, 69, 197);
+    margin-left: 50px;
+    font-size: 18px;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .chooseWord
+  .word-container
+  .word-btn-wrapper:hover {
+    border: 2px solid rgb(226, 226, 226);
+    cursor: pointer;
+  }
 
 
 
@@ -1226,10 +1581,14 @@
   margin-left: 10px;
   width: 50px;
   height: 30px;
-  
 }
 
-.pictionary-container .main-area .game-screen .game-footer .leave-wrapper button{
+.pictionary-container
+  .main-area
+  .game-screen
+  .game-footer
+  .leave-wrapper
+  button {
   border-radius: 5px;
   margin-top: 2.5px;
   font-size: 16px;
@@ -1240,14 +1599,18 @@
   color: white;
 }
 
-.pictionary-container .main-area .game-screen .game-footer .leave-wrapper button:hover {
+.pictionary-container
+  .main-area
+  .game-screen
+  .game-footer
+  .leave-wrapper
+  button:hover {
   cursor: pointer;
 }
 
-
 .pictionary-container .main-area .chat-box-wrapper {
   padding: 10px 5px;
-  background-color: rgba(0, 0, 0, .25);
+  background-color: rgba(0, 0, 0, 0.25);
   height: 455px;
   width: 20%;
 }
@@ -1260,19 +1623,31 @@
   overflow-y: auto;
 }
 
-.pictionary-container .main-area .chat-box-wrapper .chat-box::-webkit-scrollbar {/*滚动条整体样式*/
-  width: 10px;     /*高宽分别对应横竖滚动条的尺寸*/
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box::-webkit-scrollbar {
+  /*滚动条整体样式*/
+  width: 10px; /*高宽分别对应横竖滚动条的尺寸*/
   height: 1px;
 }
 
-.pictionary-container .main-area .chat-box-wrapper .chat-box::-webkit-scrollbar-thumb {/*滚动条里面小方块*/
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box::-webkit-scrollbar-thumb {
+  /*滚动条里面小方块*/
   border-radius: 10px;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
   background: rgb(193, 193, 193);
 }
 
-.pictionary-container .main-area .chat-box-wrapper .chat-box::-webkit-scrollbar-track {/*滚动条里面轨道*/
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box::-webkit-scrollbar-track {
+  /*滚动条里面轨道*/
+  box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
   background: #f3f2f2;
 }
@@ -1289,20 +1664,32 @@
   width: 240px;
 }
 
-
-.pictionary-container .main-area .chat-box-wrapper .chat-box .chat-row .chat-row-user {
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box
+  .chat-row
+  .chat-row-user {
   font-weight: bold;
   /* height: 30px; */
 }
 
-.pictionary-container .main-area .chat-box-wrapper .chat-box .chat-row .chat-row-msg {
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box
+  .chat-row
+  .chat-row-msg {
   margin-left: 5px;
   overflow-wrap: break-word;
   /* height: 30px; */
 }
 
-
-.pictionary-container .main-area .chat-box-wrapper .chat-box .answer-correct-row {
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box
+  .answer-correct-row {
   color: white;
   border-radius: 3px;
   display: flex;
@@ -1315,12 +1702,11 @@
   width: 240px;
 }
 
-
-.pictionary-container .main-area .chat-box-wrapper .input-box { 
+.pictionary-container .main-area .chat-box-wrapper .input-box {
   /* outline: 2px rgb(255, 65, 65) solid; */
   display: flex;
   margin: 0 auto 0 5px;
-  background-color:rgba(0, 0, 0, .2);
+  background-color: rgba(0, 0, 0, 0.2);
   height: 50px;
   width: 255px;
 }
@@ -1332,13 +1718,11 @@
   outline: none;
   width: 210px;
   height: 50px;
-  
 }
 .pictionary-container .main-area .chat-box-wrapper .input-box .btn-send {
   border: none;
   width: 35px;
   height: 50px;
 }
-
 </style>
 
