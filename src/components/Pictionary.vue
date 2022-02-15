@@ -61,8 +61,8 @@
                     <img />
                   </div>
                 </div>
-                <!-- <div class="player-info"> -->
-                <div class="player-name">{{ u.username }}</div>
+                <!-- <div class="player-info">  -->
+                <div class="player-name">{{ u.username }}</div> 
 
                 <!-- </div> -->
                 <div class="player-points">2000</div>
@@ -73,8 +73,8 @@
       </div>
       <div class="game-screen">
         <div class="game-info">
-          <div>
-            <button @click="gameStart">test</button>
+          <div class="ready-btn-wrapper">
+            <button @click.once="getReady">Ready !</button>
           </div>
 
           <div class="toolkit">
@@ -205,8 +205,21 @@
               <p :class="gameStartInfoShow" class="gameStartInfo">Game will start in {{ gameStartDelay }}s</p>
               <p :class="roundInfoShow" class="roundInfo">This is {{drawer.username}} round</p>
               <div class="roundSummary" :class="roundSummaryShow">
-                Time is up!
-                The word is {{word}}
+                <div class="round-summary-container">
+                  <div class="time-is-up-wrapper">
+                    <p>Time is up!</p>
+                  </div>
+                  <div class="display-word-wrapper">
+                    <span>The word was apple{{word}}</span>
+                  </div>
+                </div>
+                <div class="rank-each-round-wrapper">
+                  <div v-for="(o, index) in pointsAddEachRound" :key="index" class="rank-each-round-row">
+                    <div class="rank-each-round-row-username">{{o.user.username}}</div>
+                    <div class="rank-each-round-row-points">+{{o.points}}&nbsp;points</div>       
+                  </div>
+
+                </div>
               </div>
               <div class="chooseWord" :class="chooseWordShow">
                   <div class="chooseWord-title">
@@ -266,6 +279,7 @@ export default {
     ...mapState("common", {
       user: "user",
     }),
+
     question: {
       get() {
         let res = "";
@@ -275,13 +289,23 @@ export default {
           for (let a = 1; a<= num; a++) {
             res = res + "_ ";
           }
-          res = res + '\xa0\xa0';
+          res = res + '\xa0';
           console.log(res);
         }
         return res;
       }
     },
+
+    sortedPointsAddEachRound: {
+      get() {
+        for (let i = 0; i < this.pointsAddEachRound.length; i++) {
+            //
+        }
+        return {};
+      }
+    }
   },
+
   data() {
     return {
       message: "",
@@ -320,9 +344,35 @@ export default {
       chooseWordShow: [],
       curRound: 0,
       isCurUserAnswerCorrect: false,
+      
+      pointsAddEachRound: [],
+      totalPoints: [],
+
+      readyNums: 0,
     };
   },
-  watch: {},
+
+  watch: {
+    readyNums: {
+      handler(newValue, oldValue) {
+        console.log(oldValue);
+        if (newValue == this.playerList.length) {
+          if (this.user.userId == this.playerList[0].userId) {
+            console.log("Start")
+            let data = {
+            status: "",
+            msg: "",
+            msgType: "gameStart",
+            data: {
+              roomCode: this.roomCode,
+            },
+          };
+          this.websocket.send(JSON.stringify(data));
+          }
+        }
+      }
+    }
+  },
   methods: {
     joinRoomWithCode() {
       // todo 关于输入的code合法性判断
@@ -498,6 +548,7 @@ export default {
 
         if (receivedData.msgType == "playerList") {
           this.playerList = receivedData.data;
+          
           console.log(this.playerList);
         }
 
@@ -509,17 +560,21 @@ export default {
         if (receivedData.msgType == "gameProcess") {
           if (this.curRound > this.playerList.length) {
             //todo
+            console.log()
           }
 
           this.drawer = receivedData.data;
-          let req = {
-            status: "",
-            msg: "",
-            msgType: "requestWords",
-            data: {
-            },
-          };
-          this.websocket.send(JSON.stringify(req));
+          if (this.user.userId == this.drawer.userId) {
+            let req = {
+              status: "",
+              msg: "",
+              msgType: "requestWords",
+              data: {
+              },
+            };
+            this.websocket.send(JSON.stringify(req));
+          }
+          
           console.log(this.user)
           console.log(this.drawer)
           if(this.user.userId == this.drawer.userId) {
@@ -535,6 +590,20 @@ export default {
         }
 
         if (receivedData.msgType == "timeIsUp") {
+          if (this.isCurUserAnswerCorrect == false) {
+            console.log(this.user.userId)
+            let data = {
+              status: "",
+              msg: "",
+              msgType: "addPoints",
+              data: {
+                user: this.user,
+                roomCode: this.roomCode,
+                points: 0.0,
+              },
+          };
+          this.websocket.send(JSON.stringify(data));
+        }
           this.roundSummaryShow = ["active", "slideInUp"];
           this.roundSummary(); 
         }
@@ -546,6 +615,18 @@ export default {
 
         if (receivedData.msgType == "round") {
           this.curRound = receivedData.data;
+        }
+
+        if (receivedData.msgType == "gameStart") {
+          console.log("game start")
+          this.gameStart();
+        }
+
+        if (receivedData.msgType == "addPoints") {
+          console.log("add points received")
+          console.log(receivedData.data);
+          this.pointsAddEachRound.push(receivedData.data);
+          console.log(this.pointsAddEachRound);
         }
 
         if (receivedData.msgType == "chatMsg") {
@@ -574,6 +655,10 @@ export default {
           chatRow.innerText =  a + " answer is correct!";
           this.$refs.chatBox.appendChild(chatRow);
           this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
+        }
+
+        if (receivedData.msgType == "getReady") {
+          this.readyNums++;
         }
 
         //console.log(event.data);
@@ -605,12 +690,12 @@ export default {
       };
       // //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
       // window.onbeforeunload = function () {
-      //     websocket.close();
+      //   websocket.close();
       // }
     },
 
     sendMsg() {
-      if (this.message == this.word && this.isCurUserAnswerCorrect == false) {
+      if (this.message == this.word && this.isCurUserAnswerCorrect == false && this.drawTimeSec >= 0) {
         let data = {
           status: "",
           msg: "",
@@ -623,6 +708,19 @@ export default {
         this.websocket.send(JSON.stringify(data));
         this.message = "";  
         this.isCurUserAnswerCorrect = true;
+
+        data = {
+          status: "",
+          msg: "",
+          msgType: "addPoints",
+          data: {
+            user: this.user,
+            roomCode: this.roomCode,
+            points: this.drawTimeSec * 1.5,
+          },
+        };
+        this.websocket.send(JSON.stringify(data));
+
       } else {
         // 如果当前用户已经回答对了，则不能再发这个单词了
         if (this.message == this.word && this.isCurUserAnswerCorrect == true) {
@@ -680,10 +778,13 @@ export default {
 
     chooseWordMethod(round) {
       if (this.roundDelay <= 0) {
-        console.log("round info call back");
+        // console.log("round info call back");
         this.isMuteActive = "";
         this.chooseWordShow = [];
         this.roundDelay = 5;
+        if (this.word == '') {
+          this.word = this.wordList[1];
+        }
         this.countDown(round); 
         return;
       }
@@ -725,6 +826,7 @@ export default {
         this.websocket.send(JSON.stringify(data));
         //this.roundSummaryShow = ["active", "slideInUp"];
         //this.roundSummary(); 
+        
         return;
       }
       setTimeout(() => {
@@ -743,8 +845,22 @@ export default {
         console.log("round summary call back");
         this.roundSummaryDelay = 6;
         this.roundSummaryShow = "";
+        this.isCurUserAnswerCorrect = false;
+        this.pointsAddEachRound = [];
         // 给服务器发送this.curRound + 1, msgType 是gameProcess 来开启下一轮
         //this.gameProccess(round + 1); 
+        if (this.user.userId == this.drawer.userId) {
+          let data = {
+            status: "",
+            msg: "",
+            msgType: "gameProcess",
+            data: {
+              roomCode: this.roomCode,
+              round: this.curRound + 1,
+            },
+          }
+          this.websocket.send(JSON.stringify(data));
+        }
         return;
       }
       setTimeout(() => {
@@ -767,7 +883,21 @@ export default {
 
       this.websocket.send(JSON.stringify(data));
       this.chooseWordShow = [];
-    }
+    },
+    getReady() {
+      // 给服务器发送当前用户准备了，服务器再发给这个房间中的所有人
+      let data = {
+        status: "",
+        msg: "",
+        msgType: "getReady",
+        data: {
+           user: this.user,
+           roomCode: this.roomCode,
+        },
+      };
+
+      this.websocket.send(JSON.stringify(data));
+    },
 
   },
 };
@@ -1197,6 +1327,8 @@ export default {
   td
   .player
   .player-name {
+    overflow: hidden;
+  text-overflow: ellipsis;
   width: 100px;
   margin-left: 10px;
   height: 60px;
@@ -1227,8 +1359,31 @@ export default {
   background-color: rgb(52, 81, 98);
   background-image: url("https://papergames.io/images/patterns/style-2-5.png");
   height: 10%;
-  width: 100%;
+  width: 862px;
   display: flex;
+}
+
+.pictionary-container .main-area .game-screen .game-info .ready-btn-wrapper {
+  width: 100px;
+  height: 100%;
+  
+}
+
+.pictionary-container .main-area .game-screen .game-info .ready-btn-wrapper button {
+  color: white;
+  font-size: 16px;
+  border-radius: 5px;
+  background-color: rgb(91, 175, 0);
+  border: 2px solid transparent;
+  background-clip: border-box;
+  margin: 18px 15px;
+  width: 70px;
+  height: 30px;
+}
+
+.pictionary-container .main-area .game-screen .game-info .ready-btn-wrapper button:hover {
+  cursor: pointer;
+  border: 2px solid rgb(226, 226, 226);
 }
 
 .pictionary-container .main-area .game-screen .game-info .toolkit {
@@ -1486,9 +1641,106 @@ export default {
   .process-info 
   .roundSummary {
     display: none;
-    background-color: aquamarine;
+    background-color: rgb(52, 81, 98);
     width: 350px;
     height: 480px;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary
+  .round-summary-container {
+    width: 350px;
+    height: 120px;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary
+  .round-summary-container
+  .time-is-up-wrapper {
+    color: white;
+    line-height: 70px;
+    height: 60px;
+    width: 350px;
+    /* background-color: aqua; */
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary
+  .round-summary-container
+  .display-word-wrapper {
+    font-size: 22px;
+    line-height: 50px;
+    height: 60px;
+    width: 350px;
+    /* background-color: wheat; */
+}
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary
+  .rank-each-round-wrapper {
+    height: 320px;
+    margin-top: 20px;
+    background-color: aqua;
+}
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary
+  .rank-each-round-row {
+    display: flex;
+    justify-content: center;
+    height: 40px;
+    background-color: antiquewhite;
+    line-height: 40px;
+    font-size: 20px;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary
+  .rank-each-round-row
+  .rank-each-round-row-username {
+    width: 140px;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .roundSummary
+  .rank-each-round-row
+  .rank-each-round-row-points {
+    width: 140px;
   }
   
 .pictionary-container
@@ -1656,7 +1908,7 @@ export default {
   border-radius: 3px;
   display: flex;
   /* height: 30px; */
-  background-color: rgb(63, 138, 252);
+  background-color: rgb(144, 188, 255);
   line-height: 30px;
   padding: 0 5px;
   overflow-wrap: break-word;
@@ -1682,6 +1934,7 @@ export default {
   .chat-row-msg {
   margin-left: 5px;
   overflow-wrap: break-word;
+  
   /* height: 30px; */
 }
 
@@ -1719,6 +1972,7 @@ export default {
   width: 210px;
   height: 50px;
 }
+
 .pictionary-container .main-area .chat-box-wrapper .input-box .btn-send {
   border: none;
   width: 35px;
