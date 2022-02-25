@@ -1,6 +1,22 @@
 <template>
   <div id="root">
+    
+
+    <el-dialog
+      title=""
+      :visible.sync="dialogVisible"
+      width="30%"
+      :before-close="handleClose">
+      <h2>Looks like it's your first time here: </h2>
+      <span><input type="text" class="username-input" placeholder="USERNAME" v-model="inputUsername"></span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">Use Default Name</el-button>
+        <el-button type="primary"  @click="setName">Confirm</el-button>
+      </span>
+    </el-dialog>
+
     <div class="top-nav">
+      <!-- <el-button type="text" @click="dialogVisible = true">点击打开 Dialog</el-button> -->
       <div class="top-nav-left">
         <ul class="top-nav-left-list">
           <li>
@@ -115,7 +131,13 @@
     components: {
       
     },
+
     mounted() {
+      let loginTicket = this.getCookie("loginTicket");
+      if (loginTicket == null) {
+        this.dialogVisible = true;
+      }
+
       axios.get("http://localhost:8081/welcome")
       .then(res => {
         let userRes = res.data
@@ -132,8 +154,8 @@
       this.$router.push({
         path: '/mainpage',
       });
-
     },
+
     data() {
       return {
         showSidePage: "",
@@ -141,13 +163,17 @@
         fontColor: "black",
         signInTabActive: "",
         signUpTabActive: "",
+        dialogVisible: false,
+        inputUsername: '',
       };
     },
+
     computed: {
       ...mapState('common', {
         user: 'user',
       }),
     },
+
     methods: {
       ...mapActions('common', {
         setUser: 'setUser',
@@ -184,6 +210,44 @@
       backToDefaultColor() {
         this.fontColor = "black";
       },
+
+      setName() {
+        axios.put("http://localhost:8081/user",{
+          userId: this.user.userId,
+          username: this.inputUsername,
+        })
+        .then(res => {
+            let userRes = res.data
+            console.log(res)
+            //console.log(this)
+            this.$store.dispatch('common/setUser', userRes)
+            this.setUser(userRes)
+            console.log(this.user)
+        })
+        .catch(err => {
+          console.error(err);
+        });
+
+        this.dialogVisible = false;
+      },
+
+      getCookie(name) {
+        //获取当前所有cookie
+        var strCookies = document.cookie;
+        //截取变成cookie数组
+        var array = strCookies.split(';');
+        //循环每个cookie
+        for (var i = 0; i < array.length; i++) {
+            //将cookie截取成两部分
+            var item = array[i].split("=");
+            //判断cookie的name 是否相等
+            if (item[0] == name) {
+                return item[1];
+            }
+        }
+        return null;
+      },
+
     },
   };
 </script>
@@ -437,6 +501,16 @@ li {
   margin-top: 64px;
   background-color: transparent;
   /* background-image: url("https://papergames.io/images/patterns/style-2-5.png"); */
+}
+
+
+.username-input {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 18px;
+  padding: 0px 10px;
+  width: 370px;
+  height: 50px;
 }
 
 </style>

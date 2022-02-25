@@ -10,11 +10,15 @@
           <h1>ROOM CODE</h1>
         </div>
         <div class="room-code-input-box">
-          <input type="text" v-model="enteredRoomCode" />
+          <input type="text" v-model="enteredRoomCode" @focus="enterRoomCodeFocus"/>
         </div>
         <div class="join-room-wrapper">
           <button class="join-room-btn" @click="joinRoomWithCode">JOIN</button>
         </div>
+        <div class="join-err-wrapper" :class="isJoinErrShow">
+          {{joinErrMsg}}
+        </div>
+
       </div>
     </div>
 
@@ -52,20 +56,20 @@
     <div class="main-area" :class="isShowMainArea">
       <div class="rank-wrapper">
         <table class="rank-table">
-          <tr v-for="(u, index) in playerList" :key="index">
+          <tr v-for="(obj, index) in sortedTotalPointsUserList" :key="index">
             <td>
               <div class="player">
-                <div class="player-rank">#1</div>
+                <div class="player-rank">#{{index + 1}}</div>
                 <div class="player-avatar">
                   <div class="avatar-wrapper">
                     <img />
                   </div>
                 </div>
                 <!-- <div class="player-info">  -->
-                <div class="player-name">{{ u.username }}</div> 
+                <div class="player-name">{{ obj.user.username }}</div> 
 
                 <!-- </div> -->
-                <div class="player-points">2000</div>
+                <div class="player-points">{{obj.points}}</div>
               </div>
             </td>
           </tr>
@@ -73,8 +77,19 @@
       </div>
       <div class="game-screen">
         <div class="game-info">
+          <div class="info-container">
+            <el-popover
+              placement="right-start"
+              trigger="hover"
+              :content="roomInfoContent"
+              >
+              <el-button slot="reference" class="info-wrapper-button"><i class="el-icon-info"></i></el-button>
+            </el-popover>
+            
+          </div>
+          
           <div class="ready-btn-wrapper">
-            <button @click.once="getReady">Ready !</button>
+            <button @click.once="getReady" ref="readyBtn">{{readyBtnContent}}</button>
           </div>
 
           <div class="toolkit">
@@ -175,10 +190,10 @@
 
             <div class="stroke-type">
               <div class="pen-wrapper">
-                <img src="https://skribbl.io/res/pen.gif" height="50px" />
+                <img src="https://skribbl.io/res/pen.gif" height="50px"/>
               </div>
               <div class="ereaser-wrapper">
-                <img src="https://skribbl.io/res/rubber.gif" width="40px" />
+                <img src="https://skribbl.io/res/rubber.gif" width="40px"/>
               </div>
             </div>
           </div>
@@ -203,14 +218,14 @@
           <div class="mute clearfix" :class="isMuteActive">
             <div class="process-info">
               <p :class="gameStartInfoShow" class="gameStartInfo">Game will start in {{ gameStartDelay }}s</p>
-              <p :class="roundInfoShow" class="roundInfo">This is {{drawer.username}} round</p>
+              <p :class="roundInfoShow" class="roundInfo">This is {{drawer.username}}'s round</p>
               <div class="roundSummary" :class="roundSummaryShow">
                 <div class="round-summary-container">
                   <div class="time-is-up-wrapper">
                     <p>Time is up!</p>
                   </div>
                   <div class="display-word-wrapper">
-                    <span>The word was apple{{word}}</span>
+                    <span>The word was {{word}}</span>
                   </div>
                 </div>
                 <div class="rank-each-round-wrapper">
@@ -221,29 +236,49 @@
 
                 </div>
               </div>
+
+              <div class="game-over-container" :class="gameOverShow">
+                <div class="game-over-title">
+                    <p>GAME OVER</p>
+                </div>
+                <div class="game-over-rank-wrapper">
+                  <div v-for="(o, index) in sortedTotalPointsUserList" :key="index" class="game-over-rank-row">
+                    <div class="game-over-rank-row-username">{{o.user.username}}</div>
+                    <div class="game-over-rank-row-points">+{{o.points}}&nbsp;points</div>       
+                  </div>
+                </div>
+                <div class="game-over-footer">
+                  <div class="play-again-btn-wrapper">
+                    <button @click="playAgainMethod">PLAY AGAIN &nbsp;<i class="el-icon-right"></i></button>
+                  </div>
+                </div>
+              </div>
+
+
+
               <div class="chooseWord" :class="chooseWordShow">
                   <div class="chooseWord-title">
-                    Please choose a word {{roundDelay}}
+                    Please choose a word
                   </div>
 
                   <div class="word-container">
                     <div class="word-btn-wrapper" @click="chosenWord(w)" v-for="(w, index) in wordList" :key="index">
                       {{w}}
                     </div>
-                    
                     <!-- <button v-for="(w, index) in wordList" :key="index" >
                       {{w}}
                     </button> -->
                     
                   </div>
-                  
+                  <el-progress :percentage="(roundDelay / 5000) * 100" :show-text="false"></el-progress>
               </div>
             </div>
           </div>
         </div>
+
         <div class="game-footer">
           <div class="leave-wrapper">
-            <button @click="leaveGame">Leave</button>
+            <button @click="leaveGame"><i class="el-icon-close"></i></button>
           </div>
         </div>
       </div>
@@ -254,10 +289,15 @@
             <div class="chat-row-msg">hello</div>
           </div> -->
           <!-- <div class="answer-correct-row">Li's answer is correct !</div> -->
+          <!-- <div class="round-info-row">This is xxx's round</div> -->
         </div>
         <div class="input-box">
-          <input type="text" v-model="message" class="input-msg" />
+          <input type="text" v-model="message" class="input-msg" placeholder="Type your guess/chat here"/>
           <button @click="sendMsg" class="btn-send">Send</button>
+        </div>
+
+        <div class="mute-input-box" :class="isMuteInputBoxShow" @click="123">
+
         </div>
       </div>
     </div>
@@ -274,6 +314,7 @@ export default {
   mounted() {
     this.initCanvas();
     this.connectWebSocket();
+    
   },
   computed: {
     ...mapState("common", {
@@ -303,13 +344,40 @@ export default {
         }
         return {};
       }
+    },
+
+    sortedTotalPointsUserList: {
+      get() {
+        let sortedTotalPointsUserList = [];
+        for (let i = 0; i < this.totalPointsUserList.length; i++) {
+          sortedTotalPointsUserList[i] = this.totalPointsUserList[i];
+        }
+
+
+        for (let i = 1; i <= sortedTotalPointsUserList.length - 1; i++) {
+            for (let j = 0; j < sortedTotalPointsUserList.length - i; j++) {
+                if (sortedTotalPointsUserList[j].points < sortedTotalPointsUserList[j + 1].points){
+                    let temp = sortedTotalPointsUserList[j];
+                    sortedTotalPointsUserList[j] = sortedTotalPointsUserList[j + 1];
+                    sortedTotalPointsUserList[j + 1] = temp;
+                }
+            }
+        }
+        return sortedTotalPointsUserList;
+      }
+    },
+
+    roomInfoContent: {
+      get() {
+        return "Room Code: " + this.roomCode;
+      }
     }
   },
 
   data() {
     return {
       message: "",
-      drawTimeSec: 10,
+      drawTimeSec: 40,
       canvas: null,
       ctx: null,
       prevX: 0,
@@ -333,22 +401,33 @@ export default {
       isMuteActive: "",
       gameStartDelay: 5, // 全局游戏开始前的那段delay
       roundOver: false,
-      roundDelay: 5, // 每轮游戏开始前的delay
+      roundDelay: 5000, // 每轮游戏开始前的delay 单位：ms
       roundSummaryDelay: 6,
       gameStartInfoShow: [],
       roundInfoShow: [],
       roundSummaryShow: [],
+      gameOverShow: [],
       word: '',
       wordList: [], // save three words requested from database and showed for player to choose one 
       drawer: {},
       chooseWordShow: [],
-      curRound: 0,
+      curRound: 1,
       isCurUserAnswerCorrect: false,
       
       pointsAddEachRound: [],
-      totalPoints: [],
+      totalPointsUserList: [],
 
-      readyNums: 0,
+      readyNums: 0,      //#
+      isReady: false,    //#
+      readyBtnContent: "READY",
+
+      isDrawing: false,
+
+      isMuteInputBoxShow: [],
+      isJoinErrShow: [],
+      joinErrMsg: "",
+
+      guessCorrectNum: 0,
     };
   },
 
@@ -374,9 +453,21 @@ export default {
     }
   },
   methods: {
+    enterRoomCodeFocus() {
+      this.isJoinErrShow = [];
+    },
+
     joinRoomWithCode() {
       // todo 关于输入的code合法性判断
-  
+      if (this.enteredRoomCode == "") {
+        console.log(this.enteredRoomCode)
+         this.joinErrMsg = "Code length cannot be 0";
+        this.isJoinErrShow = ["active"];
+       
+        return;
+      } else if (this.enteredRoomCode) {
+        //
+      }
       let data = {
         status: "",
         msg: "",
@@ -390,13 +481,11 @@ export default {
       console.log(data);
 
       this.websocket.send(JSON.stringify(data));
-      this.roomCode = this.enteredRoomCode;
+     
+     
+      
 
-      this.isEnterRoomId = ["non-active"];
-      this.isShadow = "";
-      this.isMenuShow = "";
-      this.isShowWord = "active";
-      this.isShowMainArea = "flex-active";
+     
     },
     enterRoomId() {
       this.isShadow = ["fadeIn", "active"];
@@ -421,15 +510,29 @@ export default {
       };
 
       this.websocket.send(JSON.stringify(data));
+    
       this.isMenuShow = "";
       this.isShowWord = "active";
       this.isShowMainArea = "flex-active";
     },
 
     leaveGame() {
+
+      let data = {
+        status: "",
+        msg: "",
+        msgType: "leaveGame",
+        data: {
+          roomCode: this.roomCode,
+          user: this.user,
+        },
+      };
+      this.roomCode = "";
+      this.websocket.send(JSON.stringify(data));
       this.isShowMainArea = "";
       this.isMenuShow = "active";
       this.isShowWord = "";
+      
     },
 
     /*initialize canvas */
@@ -543,7 +646,43 @@ export default {
 
         if (receivedData.msgType == "roomCode") {
           this.roomCode = receivedData.data;
+          let data = {
+            status: "",
+            msg: "",
+            msgType: "totalPointsUserList",
+            data: {
+              roomCode: this.roomCode,
+            },
+          }
+          this.websocket.send(JSON.stringify(data));
           console.log(this.roomCode);
+        }
+
+        if (receivedData.msgType == "joinResult") {
+          if (receivedData.msg == "err") {
+            this.joinErrMsg = "Room doesn't exist"
+            this.isJoinErrShow = ["active"];  
+          } else if (receivedData.msg == "ok") {
+            this.isJoinErrShow = [];
+            this.roomCode = receivedData.data;
+            this.enterRoomId == "";
+            let data = {
+              status: "",
+              msg: "",
+              msgType: "totalPointsUserList",
+              data: {
+                roomCode: this.roomCode,
+              },
+            }
+            this.websocket.send(JSON.stringify(data));
+            this.isEnterRoomId = ["non-active"];
+            this.isShadow = "";
+            this.isMenuShow = "";
+            this.isShowWord = "active";
+            this.isShowMainArea = "flex-active";
+          } else {
+            //todo
+          }
         }
 
         if (receivedData.msgType == "playerList") {
@@ -558,13 +697,28 @@ export default {
         }
 
         if (receivedData.msgType == "gameProcess") {
+          this.isCurUserAnswerCorrect = false
+          this.pointsAddEachRound = [];
+          this.roundSummaryShow = [];
+          this.roundSummaryDelay = 0;
+          this.drawTimeSec = 40;
+          this.gameStartDelay = 0;
+          //this.gameStartInfoShow = [];
+          console.log("3--------game process")
           if (this.curRound > this.playerList.length) {
             //todo
             console.log()
           }
 
           this.drawer = receivedData.data;
+          let chatRow = document.createElement("div");
+          chatRow.classList = ["round-info-row"];
+          let a = receivedData.data.userId == this.user.userId ? "your" : receivedData.data.username + "'s"
+          chatRow.innerText = "This is " + a + " round";
+          this.$refs.chatBox.appendChild(chatRow);
+          this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
           if (this.user.userId == this.drawer.userId) {
+            this.isMuteInputBoxShow = ["flex-active"]
             let req = {
               status: "",
               msg: "",
@@ -578,10 +732,12 @@ export default {
           console.log(this.user)
           console.log(this.drawer)
           if(this.user.userId == this.drawer.userId) {
+            this.gameStartInfoShow = []
             this.isMuteActive = "flex-active";
             this.chooseWordShow = ["active", "slideInUp"];
             this.chooseWordMethod(this.curRound);
           } else {
+            this.gameStartInfoShow = []
             this.isMuteActive = "flex-active";
             this.roundInfoShow = ["active", "slideInUp"];
             this.roundInfo(this.curRound);
@@ -590,25 +746,45 @@ export default {
         }
 
         if (receivedData.msgType == "timeIsUp") {
+          //this.drawTimeSec = 0;
+          console.log("7--------time is up")
+          this.isMuteInputBoxShow = [];
           if (this.isCurUserAnswerCorrect == false) {
-            console.log(this.user.userId)
-            let data = {
-              status: "",
-              msg: "",
-              msgType: "addPoints",
-              data: {
-                user: this.user,
-                roomCode: this.roomCode,
-                points: 0.0,
-              },
-          };
-          this.websocket.send(JSON.stringify(data));
-        }
-          this.roundSummaryShow = ["active", "slideInUp"];
-          this.roundSummary(); 
+            if (this.user.userId != this.drawer.userId) {
+              console.log(this.user.userId + "send add points to server to add 0")
+              let data = {
+                status: "",
+                msg: "",
+                msgType: "addPoints",
+                data: {
+                  user: this.user,
+                  roomCode: this.roomCode,
+                  points: 0.0,
+                },
+              };
+              this.websocket.send(JSON.stringify(data));
+            } else {
+              let data = {
+                status: "",
+                msg: "",
+                msgType: "addPoints",
+                data: {
+                  user: this.user,
+                  roomCode: this.roomCode,
+                  points: this.guessCorrectNum * 7.5 * (9 - this.playerList.length),
+                },
+              };
+              this.websocket.send(JSON.stringify(data));
+            } 
+          }
+          setTimeout(() => {
+            this.roundSummaryShow = ["active", "slideInUp"];
+            if (this.drawer.userId == this.user.userId) this.roundSummary();
+          }, 1000);
         }
 
         if (receivedData.msgType == "wordChosen") {
+          this.roundDelay = 0;
           this.word = receivedData.data;
           console.log(receivedData.data)
         }
@@ -622,11 +798,50 @@ export default {
           this.gameStart();
         }
 
+
+        if (receivedData.msgType == "startDrawing") {
+          console.log("5--------start drawing")
+          this.isDrawing = true;
+          if (this.drawer.userId == this.user.userId) {
+            this.isMuteActive = "";
+            console.log("mute delete")
+            this.chooseWordShow = [];
+            this.roundDelay = 5000;
+            this.countDown(this.curRound);
+          } else {
+            this.roundInfoShow = [];
+            this.roundDelay = 5000;
+            this.countDown(this.curRound)
+          }
+        }
+
         if (receivedData.msgType == "addPoints") {
           console.log("add points received")
           console.log(receivedData.data);
           this.pointsAddEachRound.push(receivedData.data);
           console.log(this.pointsAddEachRound);
+        }
+
+        if (receivedData.msgType == "totalPointsUserList") {
+          this.totalPointsUserList = receivedData.data;
+          console.log(receivedData.data)
+        }
+
+        if (receivedData.msgType == "leaveGame") {
+          console.log("leave game")
+          this.playerList = receivedData.data.playerList;
+          if (this.playerList.length != 0) {
+            let data = {
+              status: "",
+              msg: "",
+              msgType: "totalPointsUserList",
+              data: {
+                roomCode: this.roomCode,
+              },
+            }
+            this.websocket.send(JSON.stringify(data));
+          }
+          console.log(receivedData.data.playerList)
         }
 
         if (receivedData.msgType == "chatMsg") {
@@ -635,7 +850,7 @@ export default {
 
           let chatRowUser = document.createElement("div");
           chatRowUser.classList = ["chat-row-user"];
-          chatRowUser.innerText = "Antony:";
+          chatRowUser.innerText = receivedData.data.user.username + ": ";
 
           let chatRowMsg = document.createElement("div");
           chatRowMsg.classList = ["chat-row-msg"];
@@ -648,6 +863,7 @@ export default {
         }
 
         if (receivedData.msgType == "rightMsg") {
+          this.guessCorrectNum++;
           //<div class="answer-correct-row">Li's answer is correct !</div>
           let chatRow = document.createElement("div");
           chatRow.classList = ["answer-correct-row"];
@@ -659,6 +875,42 @@ export default {
 
         if (receivedData.msgType == "getReady") {
           this.readyNums++;
+
+          let chatRow = document.createElement("div");
+          chatRow.classList = ["get-ready-row"];
+          chatRow.innerText =  receivedData.data.username + " is ready (" + this.readyNums + "/" + this.playerList.length + ")";
+          this.$refs.chatBox.appendChild(chatRow);
+          this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
+          
+        }
+
+        if (receivedData.msgType == "gameOver") {
+          this.roundSummaryShow = [];
+          this.curRound = 1;
+          console.log("game over")
+          let data = {
+            status: "",
+            msg: "",
+            msgType: "totalPointsUserList",
+            data: {
+              roomCode: this.roomCode,
+            },
+          }
+          this.websocket.send(JSON.stringify(data));
+          
+          setTimeout(() => {
+            this.gameOverShow = ["active", "slideInUp"];
+            this.readyNums = 0;
+          }, 2000);
+        }
+
+        if (receivedData.msgType == "playAgain") {
+          this.readyNums++;
+          let chatRow = document.createElement("div");
+          chatRow.classList = ["play-again-row"];
+          chatRow.innerText =  receivedData.data.username + " wants to play again (" + this.readyNums + "/" + this.playerList.length + ")";
+          this.$refs.chatBox.appendChild(chatRow);
+          this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
         }
 
         //console.log(event.data);
@@ -695,7 +947,7 @@ export default {
     },
 
     sendMsg() {
-      if (this.message == this.word && this.isCurUserAnswerCorrect == false && this.drawTimeSec >= 0) {
+      if (this.message == this.word && this.isCurUserAnswerCorrect == false && this.drawTimeSec >= 0 && this.word != "") {
         let data = {
           status: "",
           msg: "",
@@ -733,6 +985,7 @@ export default {
           data: {
             chatMessage: this.message,
             roomCode: this.roomCode,
+            user: this.user,
           },
         };
         this.websocket.send(JSON.stringify(data));
@@ -743,6 +996,7 @@ export default {
 
     // 这个方法要由服务器通知执行 
     gameStart() {
+      console.log("1--------game start")
       this.isMuteActive = "flex-active";
       this.gameStartInfoShow = ["active"];
       this.gameStartTimer();
@@ -750,7 +1004,7 @@ export default {
     
     // after all users are ready, this timer will start and a line of sentence will show on the screen
     gameStartTimer() {
-      console.log("start delay");
+      console.log("2--------game start timer")
       if (this.gameStartDelay <= 0) {
         if(this.playerList[0].userId == this.user.userId) {
           let data = {
@@ -766,7 +1020,7 @@ export default {
         }
         this.isMuteActive = "";
         this.gameStartInfoShow = [];
-        this.gameStartDelay = 10;
+        this.gameStartDelay = 5;
         //this.gameProccess(1);
         return;
       }
@@ -777,33 +1031,62 @@ export default {
     },
 
     chooseWordMethod(round) {
-      if (this.roundDelay <= 0) {
-        // console.log("round info call back");
-        this.isMuteActive = "";
-        this.chooseWordShow = [];
-        this.roundDelay = 5;
-        if (this.word == '') {
-          this.word = this.wordList[1];
+      console.log("4--------choose word")
+      if (this.roundDelay <= 0) { 
+        
+        if (this.isDrawing == false) {
+          // console.log("round info call back");
+          this.isMuteActive = "";
+          this.chooseWordShow = [];
+          if (this.word == '') {
+            this.word = this.wordList[1];
+            let data = {
+              status: "",
+              msg: "",
+              msgType: "wordChosen",
+              data: {
+                word: this.word,
+                roomCode: this.roomCode,
+              },
+            };
+            this.websocket.send(JSON.stringify(data));
+          }
+
+          let data = {
+            status: "",
+            msg: "",
+            msgType: "startDrawing",
+            data: {
+              roomCode: this.roomCode,
+            },
+          };
+          this.websocket.send(JSON.stringify(data));
+          //this.countDown(round);  
         }
-        this.countDown(round); 
+        this.roundDelay = 5000;
         return;
       }
       setTimeout(() => {
-        this.roundDelay = this.roundDelay - 1;
+        console.log(this.roundDelay)
+        this.roundDelay = this.roundDelay - 100;
         this.chooseWordMethod(round);
-      }, 1000);
+      }, 100);
     },
 
     //this method is related to round info count down 
     roundInfo(round) {
+      console.log("4-1---------------round info")
       if (this.roundDelay <= 0) {
-        console.log("round info call back");
-        this.roundInfoShow = [];
-        this.roundDelay = 5;
+        this.roundDelay = 5000;
+        // if ( this.isDrawing == false) {
+        //   console.log("round info call back");
+        //   this.roundInfoShow = [];
+        //   this.countDown(this.curRound)
+        // }
         return;
-      }
+      } 
       setTimeout(() => {
-        this.roundDelay = this.roundDelay - 1;
+        this.roundDelay = this.roundDelay - 1000;
         this.roundInfo(round);
       }, 1000);
     },
@@ -811,22 +1094,30 @@ export default {
 
     //this method is related to the count down of the drawing process for 90s
     countDown() {
+      console.log("6--------count down")
       if (this.drawTimeSec <= 0) {
-        console.log("count down call back");
-        this.drawTimeSec = 10;
-        this.isMuteActive = "flex-active";
-        let data = {
-          status: "",
-          msg: "",
-          msgType: "timeIsUp",
-          data: {
-            roomCode: this.roomCode,
-          },
+        this.roundSummaryDelay = 6;
+        this.isDrawing = false;
+        if (this.drawer.userId == this.user.userId) {
+          console.log("count down call back");
+          //this.drawTimeSec = 40;
+          this.isMuteActive = "flex-active";
+          let data = {
+            status: "",
+            msg: "",
+            msgType: "timeIsUp",
+            data: {
+              roomCode: this.roomCode,
+            },
+          }
+          this.websocket.send(JSON.stringify(data));
+          //this.roundSummaryShow = ["active", "slideInUp"];
+          //this.roundSummary(); 
+ 
+        } else {
+          //this.drawTimeSec = 40;
+          this.isMuteActive = "flex-active";     
         }
-        this.websocket.send(JSON.stringify(data));
-        //this.roundSummaryShow = ["active", "slideInUp"];
-        //this.roundSummary(); 
-        
         return;
       }
       setTimeout(() => {
@@ -838,19 +1129,32 @@ export default {
 
     // after drawing and guessing, a summary of this round will appear
     roundSummary() {
-      if (this.roundSummaryDelay <= 1) {
-        this.roundSummaryShow = [];
-      }
+      console.log("8--------round summary")
+      // if (this.roundSummaryDelay <= 1) {
+      //   this.roundSummaryShow = [];
+      // }
       if (this.roundSummaryDelay <= 0) {
+        this.ctx.clearRect(0, 0, 10000, 10000);
         console.log("round summary call back");
         this.roundSummaryDelay = 6;
-        this.roundSummaryShow = "";
+        this.roundSummaryShow = [];
         this.isCurUserAnswerCorrect = false;
         this.pointsAddEachRound = [];
         // 给服务器发送this.curRound + 1, msgType 是gameProcess 来开启下一轮
         //this.gameProccess(round + 1); 
         if (this.user.userId == this.drawer.userId) {
           let data = {
+            status: "",
+            msg: "",
+            msgType: "totalPointsUserList",
+            data: {
+              roomCode: this.roomCode,
+            },
+          }
+
+          this.websocket.send(JSON.stringify(data));
+
+          data = {
             status: "",
             msg: "",
             msgType: "gameProcess",
@@ -883,6 +1187,18 @@ export default {
 
       this.websocket.send(JSON.stringify(data));
       this.chooseWordShow = [];
+
+      data = {
+        status: "",
+        msg: "",
+        msgType: "startDrawing",
+        data: {
+          roomCode: this.roomCode,
+        },
+      };
+      this.websocket.send(JSON.stringify(data));
+      
+
     },
     getReady() {
       // 给服务器发送当前用户准备了，服务器再发给这个房间中的所有人
@@ -897,6 +1213,38 @@ export default {
       };
 
       this.websocket.send(JSON.stringify(data));
+      this.$refs.readyBtn.style.width = "30px";
+      this.$refs.readyBtn.innerHTML = "<i class='el-icon-check'></i>"
+    },
+    playAgainMethod() {
+      // let data = {
+      //   status: "",
+      //   msg: "",
+      //   msgType: "getReady",
+      //   data: {
+      //      user: this.user,
+      //      roomCode: this.roomCode,
+      //   },
+      // };
+
+      // this.websocket.send(JSON.stringify(data));
+
+      this.gameOverShow = [];
+      let data = {
+        status: "",
+        msg: "",
+        msgType: "playAgain",
+        data: {
+           user: this.user,
+           roomCode: this.roomCode,
+        },
+      };
+      this.websocket.send(JSON.stringify(data));
+      // let chatRow = document.createElement("div");
+      // chatRow.classList = ["play-again-row"];
+      // chatRow.innerText =  this.user.username + " want to play again (" + this.readyNums + "/" + this.playerList.length + ")";
+      // this.$refs.chatBox.appendChild(chatRow);
+      // this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
     },
 
   },
@@ -1093,6 +1441,20 @@ export default {
   .join-room-wrapper
   button:active {
   border: 3px black solid;
+}
+
+.pictionary-container
+  .shadow
+  .enter-room-id-wrapper
+  .join-err-wrapper {
+    display: none;
+    line-height: 30px;
+    height: 30px;
+    width: 600px;
+    text-align: center;
+    font-size: 20px;
+    color: red;
+    font-weight: bold;
 }
 
 .pictionary-container .pictionary-menu-wrapper {
@@ -1303,6 +1665,7 @@ export default {
   text-align: center;
   border-radius: 50%;
 }
+
 .pictionary-container
   .main-area
   .rank-wrapper
@@ -1343,6 +1706,7 @@ export default {
   td
   .player
   .player-points {
+  text-align: center;
   height: 60px;
   line-height: 60px;
   width: 65px;
@@ -1363,34 +1727,46 @@ export default {
   display: flex;
 }
 
+.pictionary-container .main-area .game-screen .game-info .info-container {
+  height: 100%;
+  /* background-color: aliceblue; */
+  width: 70px;
+}
+
 .pictionary-container .main-area .game-screen .game-info .ready-btn-wrapper {
+  margin-left: 10px;
   width: 100px;
   height: 100%;
-  
+  /* background-color: aliceblue; */
 }
 
 .pictionary-container .main-area .game-screen .game-info .ready-btn-wrapper button {
+  font-weight: bold;
   color: white;
   font-size: 16px;
-  border-radius: 5px;
+  border-radius: 20px;
   background-color: rgb(91, 175, 0);
   border: 2px solid transparent;
   background-clip: border-box;
-  margin: 18px 15px;
-  width: 70px;
+  margin: 20px 0px;
+  width: 90px;
   height: 30px;
+  transition: all 0.3s;
 }
+
 
 .pictionary-container .main-area .game-screen .game-info .ready-btn-wrapper button:hover {
   cursor: pointer;
   border: 2px solid rgb(226, 226, 226);
 }
 
+
 .pictionary-container .main-area .game-screen .game-info .toolkit {
   /* background-color: rgb(36, 81, 149); */
   /* background-image: url("https://papergames.io/images/patterns/style-2-5.png"); */
   width: 380px;
-  margin: 0 auto;
+  
+  margin: 0 168px 0 70px;
   display: flex;
   align-items: center;
 }
@@ -1638,6 +2014,170 @@ export default {
   .game-screen
   .canvas-wrapper
   .mute
+  .process-info
+  .game-over-container {
+    display: none; /*to be deleted */
+    background-color: rgb(255, 207, 45);
+    width: 350px;
+    height: 480px;
+}
+
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info 
+  .game-over-container
+  .game-over-title {
+    color: rgb(255, 255, 255) !important;
+    line-height: 100px;
+    height: 100px;
+    width: 350px;
+}
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-rank-wrapper {
+    height: 320px;
+    /* margin-top: 20px; */
+    /* background-color: aqua; */
+}
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-rank-wrapper
+  .game-over-rank-row {
+    color: rgb(109, 78, 123);
+    display: flex;
+    justify-content: center;
+    height: 40px;
+    /* background-color: antiquewhite; */
+    line-height: 40px;
+    font-size: 20px;
+}
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-rank-wrapper
+  .game-over-rank-row-username {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 140px;
+}
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-rank-wrapper
+  .game-over-rank-row-points {
+    width: 140px;
+}
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-footer {
+    justify-content: center;
+    display: flex;
+    line-height: 60px;
+    height: 60px;
+}
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-footer
+  .play-again-btn-wrapper {
+    width: 160px;
+    /* background-color: antiquewhite; */
+    line-height: 45px;
+    height: 60px;
+}
+
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-footer
+  .play-again-btn-wrapper button {
+    transition: all 0.5s;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 20px;
+    color: white;
+    background-color: rgb(100, 73, 145);
+    border: none;
+    width: 160px;
+    height: 40px;
+  }
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-footer
+  .play-again-btn-wrapper button
+  .el-icon-right {
+    font-weight: bold;
+  }
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
+  .process-info
+  .game-over-container
+  .game-over-footer
+  .play-again-btn-wrapper button:hover {
+    cursor: pointer;
+    transform: scale(1.15);
+  }
+
+
+
+
+
+
+.pictionary-container
+  .main-area
+  .game-screen
+  .canvas-wrapper
+  .mute
   .process-info 
   .roundSummary {
     display: none;
@@ -1700,7 +2240,7 @@ export default {
   .rank-each-round-wrapper {
     height: 320px;
     margin-top: 20px;
-    background-color: aqua;
+    /* background-color: aqua; */
 }
 
 .pictionary-container
@@ -1728,6 +2268,8 @@ export default {
   .roundSummary
   .rank-each-round-row
   .rank-each-round-row-username {
+    overflow: hidden;
+    text-overflow: ellipsis;
     width: 140px;
   }
 
@@ -1753,7 +2295,7 @@ export default {
     display: none;
     width: 500px;
     height: 250px;
-    background-color: burlywood;
+    background-color: rgb(52, 81, 98);
   }
 
 .pictionary-container
@@ -1768,6 +2310,7 @@ export default {
     height: 100px;
     /* background-color: red; */
     line-height: 100px;
+    color: white;
   }
 
 .pictionary-container
@@ -1785,6 +2328,7 @@ export default {
     justify-content: start;
     align-items: center;
   }
+
 .pictionary-container
   .main-area
   .game-screen
@@ -1794,15 +2338,17 @@ export default {
   .chooseWord
   .word-container
   .word-btn-wrapper {
+    border-radius: 20px;
     border: 2px transparent solid;
     background-clip: border-box;
     color: white;
     line-height: 46px;
     width: 96px;
     height: 46px;
-    background-color: rgb(0, 69, 197);
+    background-color: rgb(128, 205, 181);
     margin-left: 50px;
     font-size: 18px;
+    transition: all 0.2s;
   }
 
 .pictionary-container
@@ -1814,11 +2360,10 @@ export default {
   .chooseWord
   .word-container
   .word-btn-wrapper:hover {
+    transform: scale(1.05);
     border: 2px solid rgb(226, 226, 226);
     cursor: pointer;
   }
-
-
 
 .pictionary-container .main-area .game-screen .game-footer {
   background-color: rgb(52, 81, 98);
@@ -1841,10 +2386,10 @@ export default {
   .game-footer
   .leave-wrapper
   button {
-  border-radius: 5px;
+  border-radius: 50%;
   margin-top: 2.5px;
   font-size: 16px;
-  width: 50px;
+  width: 25px;
   height: 25px;
   background-color: rgb(255, 0, 0);
   border: none;
@@ -1955,13 +2500,72 @@ export default {
   width: 240px;
 }
 
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box
+  .play-again-row {
+  color: white;
+  border-radius: 3px;
+  display: flex;
+  /* height: 30px; */
+  background-color: rgb(255, 207, 45);
+  line-height: 30px;
+  padding: 0 5px;
+  overflow-wrap: break-word;
+  margin-top: 2px;
+  width: 240px;
+}
+
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box
+  .get-ready-row {
+    color: white;
+    border-radius: 3px;
+    display: flex;
+    /* height: 30px; */
+    background-color: rgb(37, 190, 161);
+    line-height: 30px;
+    padding: 0 5px;
+    overflow-wrap: break-word;
+    margin-top: 2px;
+    width: 240px;
+}
+.pictionary-container
+  .main-area
+  .chat-box-wrapper
+  .chat-box
+.round-info-row {
+    color: black;
+    border-radius: 3px;
+    display: flex;
+    /* height: 30px; */
+    background-color: rgb(255, 247, 235);
+    line-height: 30px;
+    padding: 0 5px;
+    overflow-wrap: break-word;
+    margin-top: 2px;
+    width: 240px;
+}
+
 .pictionary-container .main-area .chat-box-wrapper .input-box {
   /* outline: 2px rgb(255, 65, 65) solid; */
   display: flex;
   margin: 0 auto 0 5px;
   background-color: rgba(0, 0, 0, 0.2);
-  height: 50px;
+  height: 40px;
   width: 255px;
+}
+
+.pictionary-container .main-area .chat-box-wrapper .mute-input-box {
+  display: none;
+  margin: 0 auto 0 5px;
+  background-color: transparent;
+  height: 40px;
+  width: 255px;
+  transform: translateY(-40px);
 }
 
 .pictionary-container .main-area .chat-box-wrapper .input-box .input-msg {
@@ -1969,14 +2573,43 @@ export default {
   padding: 0 5px;
   border: none;
   outline: none;
-  width: 210px;
-  height: 50px;
+  width: 200px;
+  height: 40px;
 }
 
 .pictionary-container .main-area .chat-box-wrapper .input-box .btn-send {
   border: none;
-  width: 35px;
-  height: 50px;
+  width: 45px;
+  height: 40px;
+}
+
+.pictionary-container .main-area .chat-box-wrapper .input-box .btn-send:hover {
+  cursor: pointer;
+}
+
+.info-wrapper-button {
+  background-color: transparent !important;
+  border: none !important;
+  margin-top: 10px !important;
+}
+
+.el-icon-info {
+  color: rgb(230, 230, 230);
+  display: block;
+  font-size: 26px;
+}
+
+.el-icon-info:hover {
+  color: rgb(196, 196, 196);
+  cursor: pointer;
+}
+
+.el-icon-check {
+  font-weight: bold;
+}
+
+.el-icon-close {
+  font-weight: 1000 !important;
 }
 </style>
 
