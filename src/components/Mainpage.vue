@@ -22,7 +22,7 @@
                         <span>Tic Tac Toe</span>
                     </div>
                 </div>
-                <div class="battleship-wrapper">
+                <div class="battleship-wrapper" @click="gotoBattleship">
                      <div class="battleship-img-wrapper clearfix"  @mouseout="battleshipInfoFadeOut" @mouseover="battleshipInfoFadeIn">
                         <div class="battleship-info"  :class="battleshipInfoAnimation">
                             <p>Play Pictionary game with your firends!</p>
@@ -139,6 +139,11 @@
             gotoTicTacToe() {
                 this.$router.push({
                     path: '/mainpage/tictactoe',
+                })
+            },
+            gotoBattleship() {
+                this.$router.push({
+                    path: '/mainpage/battleship',
                 })
             }
         }

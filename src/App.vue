@@ -270,6 +270,7 @@ body {
   background-image: url("https://papergames.io/images/patterns/style-2-5.png");
   background-attachment: fixed;
   position: relative;
+  background-color: #ced4da;
 }
 
 li {

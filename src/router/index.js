@@ -2,6 +2,8 @@ import VueRouter from 'vue-router'
 import Pictionary from '../components/Pictionary.vue'
 import Mainpage from '../components/Mainpage.vue'
 import TicTacToe from '../components/TicTacToe.vue'
+import Battleship from '../components/Battleship.vue'
+
 export default new VueRouter({
     routes: [
         {
@@ -13,6 +15,10 @@ export default new VueRouter({
             component: TicTacToe,
         },
         {
+            path: '/battleship',
+            component: Battleship,
+        },
+        {
             path: '/mainpage',
             component: Mainpage,
             children: [{
@@ -22,6 +28,10 @@ export default new VueRouter({
             {
                 path: 'tictactoe',
                 redirect: '/tictactoe'
+            },
+            {
+                path: 'battleship',
+                redirect: '/battleship'
             }
             ],
         },

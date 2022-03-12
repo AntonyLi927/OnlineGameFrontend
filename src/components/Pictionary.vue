@@ -697,6 +697,7 @@ export default {
         }
 
         if (receivedData.msgType == "gameProcess") {
+          this.ctx.clearRect(0, 0, 10000, 10000);
           this.isCurUserAnswerCorrect = false
           this.pointsAddEachRound = [];
           this.roundSummaryShow = [];
@@ -2524,7 +2525,6 @@ export default {
   .get-ready-row {
     color: white;
     border-radius: 3px;
-    display: flex;
     /* height: 30px; */
     background-color: rgb(37, 190, 161);
     line-height: 30px;
@@ -2563,8 +2563,10 @@ export default {
   display: none;
   margin: 0 auto 0 5px;
   background-color: transparent;
-  height: 40px;
-  width: 255px;
+  /* height: 40px;
+  width: 255px; */
+  height: 0px;
+  width: 0px;
   transform: translateY(-40px);
 }
 
