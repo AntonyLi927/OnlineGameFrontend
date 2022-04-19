@@ -948,7 +948,7 @@ export default {
     },
 
     sendMsg() {
-      if (this.message == this.word && this.isCurUserAnswerCorrect == false && this.drawTimeSec >= 0 && this.word != "") {
+      if (this.message == this.word.toLowerCase() && this.isCurUserAnswerCorrect == false && this.drawTimeSec >= 0 && this.word != "") {
         let data = {
           status: "",
           msg: "",

@@ -15,7 +15,7 @@
                 <div class="tic-tac-toe-wrapper" @click="gotoTicTacToe">
                     <div class="tic-tac-toe-img-wrapper clearfix"  @mouseout="ticTacToeInfoFadeOut" @mouseover="ticTacToeInfoFadeIn">
                         <div class="tic-tac-toe-info"  :class="ticTacToeInfoAnimation">
-                            <p>Play Pictionary game with your firends!</p>
+                            <p>Play Tic Tac Toe game with your firends!</p>
                         </div>
                     </div>
                     <div class="tic-tac-toe-title-wrapper">
@@ -25,7 +25,7 @@
                 <div class="battleship-wrapper" @click="gotoBattleship">
                      <div class="battleship-img-wrapper clearfix"  @mouseout="battleshipInfoFadeOut" @mouseover="battleshipInfoFadeIn">
                         <div class="battleship-info"  :class="battleshipInfoAnimation">
-                            <p>Play Pictionary game with your firends!</p>
+                            <p>Play Battleship game with your firends!</p>
                         </div>
                     </div>
                     <div class="battleship-title-wrapper">
@@ -183,7 +183,7 @@
 .mainpage-container .game-list-area .game-list-wrapper>div {
     width: 280px;
     height: 280px;
-    background-color: rgb(90, 101, 117);
+    background-color: #5a6575;
     margin-left: 80px;
     margin-top: 100px;
     border-radius: 20px;
@@ -280,7 +280,8 @@
     background-color: white;
     border-radius: 20px;
     background-repeat: no-repeat;
-    background-image: url("../assets/pictionary.png");
+    background-image: url("../assets/battleship.png");
+    background-size: 220px;
     background-position: center;
 }
 

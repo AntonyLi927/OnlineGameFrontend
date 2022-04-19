@@ -100,7 +100,7 @@
           <div class="info-screen">{{gameInfo}}</div>
           <div class="btns-wrapper">
             <button @click="getReady" class="readyBtn" ref="readyBtn">READY</button><br>
-            <button class="leaveBtn">LEAVE</button>
+            <button class="leaveBtn" @click="leaveMethod">LEAVE</button>
             <el-popover
               placement="bottom"
               width="30px"
@@ -460,6 +460,23 @@ export default {
           this.$refs.chatBox.appendChild(chatRow);
           this.$refs.chatBox.scrollTop = this.$refs.chatBox.scrollHeight;
         }
+        if (receivedData.msgType == "leave") {
+            this.opponent = null;
+            this.readyNum = 0;
+            this.curTurn = "";
+            this.gameInfo = "";
+            this.$refs.chatBox.innerHTML = ""; 
+            console.log("leave the game")
+            for (let i = 0; i < 3; i++) {
+              for (let j = 0; j < 3; j++) {
+                let tableRow = this.$refs.gameGrid.children[i];
+                let tableCell = tableRow.children[j];
+                tableCell.children[0].style.display = "none";
+                tableCell.children[1].style.display = "none";
+                tableCell.setAttribute("data-occupy", "false");
+              }
+          }
+        }
 
         console.log(event)
 
@@ -566,6 +583,7 @@ export default {
     },
 
     sendMsg() {
+      if (this.chatMessage == "") return;
       let data = {
         status: "",
         msg: "",
@@ -580,6 +598,37 @@ export default {
       this.chatMessage = "";  
     },
 
+    leaveMethod() {
+      let data = {
+          status: "",
+          msg: "",
+          msgType: "leave",
+          data: {
+              roomCode: this.roomCode,
+              ticPlayer: this.ticPlayer,
+          },
+      };
+      this.websocket.send(JSON.stringify(data));
+      
+      this.gameMenuClass = ["active"];
+      this.gameContainerClass = [""];   
+      this.roomCode = "";
+      this.opponent = null;
+      this.readyNum = 0;
+      this.inputRoomCode = "";
+      this.curTurn = "";
+      this.gameInfo = "";
+      for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              let tableRow = this.$refs.gameGrid.children[i];
+              let tableCell = tableRow.children[j];
+              tableCell.children[0].style.display = "none";
+              tableCell.children[1].style.display = "none";
+              tableCell.setAttribute("data-occupy", "false");
+            }
+          }
+      this.$refs.chatBox.innerHTML = "";    
+    },
     
 
 
@@ -718,9 +767,11 @@ export default {
 
 .tictactoe-game-container {
   display: none;
+  
 }
 
 .tictactoe-header {
+  
   width: 1400px;
   height: 140px;
   /* background-color: black; */
@@ -729,6 +780,7 @@ export default {
 }
 
 .tictactoe-header .header-content {
+  box-shadow: 0 0 10px rgb(155, 155, 155);
   width: 680px;
   height: 140px;
   background-color: rgb(255, 255, 255);
@@ -812,6 +864,7 @@ export default {
 }
 
 .tictactoe-body {
+  box-shadow: 0 0 10px rgb(155, 155, 155);
   width: 1400px;
   height: 580px;
   /* background-color: blueviolet; */
@@ -1087,8 +1140,5 @@ export default {
 .tictactoe-body .chatbox-wrapper .input-box-wrapeer button:hover {
   cursor: pointer;
 }
-
-
-
 
 </style>

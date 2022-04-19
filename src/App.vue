@@ -241,9 +241,10 @@
             //将cookie截取成两部分
             var item = array[i].split("=");
             //判断cookie的name 是否相等
-            if (item[0] == name) {
-                return item[1];
+            if (item[0].trim() == name) {
+              return item[1];
             }
+            console.log("cookie" + item[0])
         }
         return null;
       },
